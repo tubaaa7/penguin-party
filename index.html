@@ -388,7 +388,7 @@
             '/models/penguin.glb',
             (gltf) => {
                 loadedPenguinBase = gltf.scene;
-                loadedPenguinBase.scale.set(1.5, 1.5, 1.5);
+                loadedPenguinBase.scale.set(0.06, 0.06, 0.06);
                 loadedPenguinBase.traverse((child) => {
                     if (child.isMesh) {
                         child.castShadow = true;
@@ -539,8 +539,8 @@
                 });
             }
 
-            const camDist = 11;
-            const camHeight = 5.2;
+            const camDist = 14;
+            const camHeight = 6.0;
             camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerGroup.position.x + Math.sin(pAngle) * camDist, 0.08);
             camera.position.y = THREE.MathUtils.lerp(camera.position.y, playerGroup.position.y + camHeight, 0.1);
             camera.position.z = THREE.MathUtils.lerp(camera.position.z, playerGroup.position.z + Math.cos(pAngle) * camDist, 0.08);
