@@ -705,20 +705,28 @@
             }
         }
 
+        // ================= KAR VE VURUŞ EFEKTLERİ (SAF BEYAZ KAR) =================
         let hitParticles = [];
-        const hitParticleMat = new THREE.MeshBasicMaterial({ color: 0xffd166 });
+        // Kayarken ve sıçrarken çıkan saf beyaz kar parçacıkları
+        const snowSplashMat = new THREE.MeshStandardMaterial({ 
+            color: 0xffffff, 
+            roughness: 0.9, 
+            metalness: 0.1, 
+            emissive: 0xe0f2fe, 
+            emissiveIntensity: 0.45 
+        });
 
-        function spawnHitBurst(x, y, z) {
+        function spawnHitBurst(x, y, z, isSnow=true) {
             for (let i = 0; i < 14; i++) {
-                const p = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), hitParticleMat);
+                const p = new THREE.Mesh(new THREE.DodecahedronGeometry(0.24, 0), snowSplashMat);
                 p.position.set(x, y, z);
                 scene.add(p);
                 hitParticles.push({
                     mesh: p,
-                    vx: (Math.random() - 0.5) * 0.35,
-                    vy: 0.15 + Math.random() * 0.25,
-                    vz: (Math.random() - 0.5) * 0.35,
-                    life: 30
+                    vx: (Math.random() - 0.5) * 0.32,
+                    vy: 0.18 + Math.random() * 0.22,
+                    vz: (Math.random() - 0.5) * 0.32,
+                    life: 26
                 });
             }
         }
@@ -752,7 +760,7 @@
             new THREE.MeshBasicMaterial({ color: 0x0077b6, transparent: true, opacity: 0.38, depthWrite: false })
         );
         footShadow.rotation.x = -Math.PI / 2;
-        footShadow.position.y = 0.015;
+        footShadow.position.y = 0.02;
         playerGroup.add(footShadow);
 
         let playerPenguinMesh = null;
@@ -781,7 +789,7 @@
 
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false }));
             sprite.scale.set(3.4, 0.85, 1);
-            sprite.position.set(0, 3.0, 0);
+            sprite.position.set(0, 3.2, 0);
             return sprite;
         }
 
@@ -807,8 +815,8 @@
                 const finalScale = 2.4 / maxDim;
 
                 const wrapper = new THREE.Group();
-                // Ayakların karın içine batmasını önleyen +0.28 dikey ofset
-                model.position.set(-bCenter.x, -bBox.min.y + 0.28, -bCenter.z);
+                // Ayakların düz zeminde ve yamaçta kar altına kaçmasını kesin önleyen taban ofseti
+                model.position.set(-bCenter.x, -bBox.min.y + 0.35, -bCenter.z);
                 wrapper.add(model);
                 wrapper.scale.set(finalScale, finalScale, finalScale);
 
@@ -845,8 +853,7 @@
                     const finalScale = 2.4 / maxDim;
 
                     const bWrapper = new THREE.Group();
-                    // Botların ayakları için de +0.28 taban ofseti
-                    bModel.position.set(-bCenter.x, -bBox.min.y + 0.28, -bCenter.z);
+                    bModel.position.set(-bCenter.x, -bBox.min.y + 0.35, -bCenter.z);
                     bWrapper.scale.set(finalScale, finalScale, finalScale);
                     bWrapper.add(bModel);
 
@@ -908,7 +915,7 @@
                 const finalScale = 2.4 / maxDim;
 
                 const oWrap = new THREE.Group();
-                oModel.position.set(-bCenter.x, -bBox.min.y + 0.28, -bCenter.z);
+                oModel.position.set(-bCenter.x, -bBox.min.y + 0.35, -bCenter.z);
                 oWrap.scale.set(finalScale, finalScale, finalScale);
                 oWrap.add(oModel);
                 pGroup.add(oWrap);
@@ -1176,6 +1183,7 @@
             }
             snowGeo.attributes.position.needsUpdate = true;
 
+            // Kar sıçrama pencereleri
             for (let i = hitParticles.length - 1; i >= 0; i--) {
                 const hp = hitParticles[i];
                 hp.mesh.position.x += hp.vx;
@@ -1268,18 +1276,23 @@
 
             if (currentElev.onHill && isMoving) {
                 if (slopeDot > 0.15) {
+                    // Yokuş aşağı hızla kayış: Kar sıçraması (beyaz kar)
                     speedMultiplier = 2.0;
-                    targetPitch = 0.52; 
-                    if (Math.random() < 0.40) {
-                        spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 0.3, playerGroup.position.z);
+                    targetPitch = 0.42; 
+                    if (Math.random() < 0.45) {
+                        spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 0.15, playerGroup.position.z);
                     }
                 } else if (slopeDot < -0.15) {
+                    // Yokuş yukarı tırmanış: Öne aşırı yatıp kara gömülmeyi engelliyoruz
                     speedMultiplier = 0.72;
-                    targetPitch = -0.28; 
+                    targetPitch = 0.02; 
                 }
             } else if (isSliding) {
                 speedMultiplier = 1.65;
-                targetPitch = 0.45;
+                targetPitch = 0.35;
+                if (Math.random() < 0.3) {
+                    spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 0.15, playerGroup.position.z);
+                }
             }
 
             const currentSpeed = baseSpeed * speedMultiplier * forwardInput;
@@ -1298,8 +1311,10 @@
             if (Math.abs(nextX) < arenaLimit) playerGroup.position.x = nextX;
             if (Math.abs(nextZ) < arenaLimit) playerGroup.position.z = nextZ;
 
+            // Tepeye tırmanırken anlık yükseklik takibi: Tepe üzerindeyken yumuşatmayı hızlandırıp yukarı kaldırıyoruz
             const nextElev = getTerrainElevation(playerGroup.position.x, playerGroup.position.z);
-            playerGroup.position.y = THREE.MathUtils.lerp(playerGroup.position.y, nextElev.height, 0.32);
+            const targetY = nextElev.height + (nextElev.onHill ? 0.18 : 0);
+            playerGroup.position.y = THREE.MathUtils.lerp(playerGroup.position.y, targetY, nextElev.onHill ? 0.55 : 0.35);
 
             if (isGameStarted && isMoving) {
                 socket.emit("playerMovement", { 
@@ -1326,12 +1341,12 @@
                     const waddle = Math.sin(walkCycle) * (isDownhill ? 0.05 : 0.18);
 
                     playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.4, 0.2);
-                    // Ayakların kara gömülmesini önleyen yüzey seviyesi
-                    playerPenguinMesh.position.y = isDownhill ? 0.05 : Math.abs(Math.sin(walkCycle)) * 0.06;
+                    // Tepede de düzlükte de ayakları daima karın üst seviyesinde tutar
+                    playerPenguinMesh.position.y = isDownhill ? 0.08 : (0.06 + Math.abs(Math.sin(walkCycle)) * 0.06);
                     playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, waddle + bodyRoll - slapWingSwing * 0.65, 0.3);
                 } else {
                     playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.35, 0.25);
-                    playerPenguinMesh.position.y = THREE.MathUtils.lerp(playerPenguinMesh.position.y, 0.05, 0.2);
+                    playerPenguinMesh.position.y = THREE.MathUtils.lerp(playerPenguinMesh.position.y, 0.08, 0.2);
                     playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, bodyRoll - slapWingSwing * 0.75, 0.3);
                 }
             }
@@ -1416,14 +1431,14 @@
                     b.walkCycle += 0.16;
                     if (b.group.children[0]) {
                         b.group.children[0].rotation.z = Math.sin(b.walkCycle) * 0.14;
-                        b.group.children[0].position.y = Math.abs(Math.sin(b.walkCycle)) * 0.04;
+                        b.group.children[0].position.y = 0.06 + Math.abs(Math.sin(b.walkCycle)) * 0.04;
                     }
                     if (Math.abs(b.group.position.x) > arenaLimit - 6 || Math.abs(b.group.position.z) > arenaLimit - 6) {
                         b.angle = Math.atan2(b.group.position.x, b.group.position.z);
                     }
                 }
                 const bElev = getTerrainElevation(b.group.position.x, b.group.position.z);
-                b.group.position.y = THREE.MathUtils.lerp(b.group.position.y, bElev.height, 0.32);
+                b.group.position.y = THREE.MathUtils.lerp(b.group.position.y, bElev.height + 0.05, 0.35);
             });
 
             const camDist = 11.5;
