@@ -268,6 +268,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
@@ -323,7 +324,7 @@
         icePond.receiveShadow = true;
         scene.add(icePond);
 
-        // Tepeler
+        // Karlı Tepeler
         const hillRamps = [
             { x: -55, z: 45, radiusX: 32, radiusZ: 26, height: 10.5, rot: 0.35 },
             { x: 58, z: -48, radiusX: 30, radiusZ: 34, height: 11.2, rot: -0.5 },
@@ -380,96 +381,7 @@
         createCabin(-32, 22, 1.2);
         createCabin(28, 28, 2.6);
 
-        // 3D Penguen Karakter Geometrisi
-        const matBlack = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
-        const matWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
-        const matOrange = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3 });
-        const matYellowHat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.5 });
-        const matRedPom = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.6 });
-        const matScarf = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 });
-
-        function createPenguinObject() {
-            const root = new THREE.Group();
-
-            const bodyGeo = new THREE.SphereGeometry(1.0, 18, 18);
-            bodyGeo.scale(1.0, 1.28, 0.92);
-            const body = new THREE.Mesh(bodyGeo, matBlack);
-            body.position.y = 1.3;
-            body.castShadow = true;
-            root.add(body);
-
-            const bellyGeo = new THREE.SphereGeometry(0.82, 16, 16);
-            bellyGeo.scale(0.88, 1.15, 0.45);
-            const belly = new THREE.Mesh(bellyGeo, matWhite);
-            belly.position.set(0, 1.25, 0.62);
-            root.add(belly);
-
-            const head = new THREE.Group();
-            head.position.set(0, 2.38, 0.1);
-            const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.72, 16, 16), matBlack);
-            headMesh.castShadow = true;
-            head.add(headMesh);
-
-            const facePatch = new THREE.Mesh(new THREE.SphereGeometry(0.58, 14, 14), matWhite);
-            facePatch.scale.set(0.9, 0.78, 0.35);
-            facePatch.position.set(0, 0.05, 0.46);
-            head.add(facePatch);
-
-            [-0.22, 0.22].forEach(ex => {
-                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-                eye.position.set(ex, 0.14, 0.68);
-                head.add(eye);
-            });
-
-            const beak = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.48, 10), matOrange);
-            beak.rotation.x = Math.PI / 2;
-            beak.position.set(0, 0.04, 0.82);
-            head.add(beak);
-
-            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.85, 14), matYellowHat);
-            hat.position.set(0, 0.78, -0.05);
-            hat.rotation.x = -0.18;
-            head.add(hat);
-
-            const pompom = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), matRedPom);
-            pompom.position.set(0, 1.25, -0.15);
-            head.add(pompom);
-            root.add(head);
-
-            const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.17, 8, 20), matScarf);
-            scarf.rotation.x = Math.PI / 2;
-            scarf.position.set(0, 2.18, 0.08);
-            root.add(scarf);
-
-            const wingGeo = new THREE.BoxGeometry(0.22, 0.95, 0.45);
-            wingGeo.translate(0, -0.42, 0);
-
-            const lWing = new THREE.Group();
-            lWing.position.set(0.96, 1.7, 0);
-            lWing.add(new THREE.Mesh(wingGeo, matBlack));
-            root.add(lWing);
-
-            const rWing = new THREE.Group();
-            rWing.position.set(-0.96, 1.7, 0);
-            rWing.add(new THREE.Mesh(wingGeo, matBlack));
-            root.add(rWing);
-
-            const footGeo = new THREE.BoxGeometry(0.44, 0.15, 0.65);
-            footGeo.translate(0, 0.07, 0.18);
-
-            const lFoot = new THREE.Group();
-            lFoot.position.set(0.42, 0, 0);
-            lFoot.add(new THREE.Mesh(footGeo, matOrange));
-            root.add(lFoot);
-
-            const rFoot = new THREE.Group();
-            rFoot.position.set(-0.42, 0, 0);
-            rFoot.add(new THREE.Mesh(footGeo, matOrange));
-            root.add(rFoot);
-
-            return { mesh: root, head, lWing, rWing, lFoot, rFoot };
-        }
-
+        // ================= SKETCHFAB GLTF PENGUEN YÜKLEYİCİ =================
         const playerGroup = new THREE.Group();
         scene.add(playerGroup);
 
@@ -481,8 +393,68 @@
         footShadow.position.y = 0.02;
         playerGroup.add(footShadow);
 
-        const myPenguin = createPenguinObject();
-        playerGroup.add(myPenguin.mesh);
+        let activeMixer = null;
+        let penguinModelWrapper = null;
+        const botMixers = [];
+
+        const gltfLoader = new THREE.GLTFLoader();
+        gltfLoader.load(
+            '/models/penguin.glb',
+            (gltf) => {
+                const rawModel = gltf.scene;
+
+                // Modelin boyutlarını hesapla ve tam 2.4 birim boyuna ölçekle
+                const box = new THREE.Box3().setFromObject(rawModel);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+
+                const targetHeight = 2.4;
+                const scaleFactor = targetHeight / (size.y > 0 ? size.y : 1);
+                rawModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                // Modeli merkezle
+                rawModel.position.x = -center.x * scaleFactor;
+                rawModel.position.y = -box.min.y * scaleFactor;
+                rawModel.position.z = -center.z * scaleFactor;
+
+                rawModel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                penguinModelWrapper = new THREE.Group();
+                penguinModelWrapper.add(rawModel);
+
+                // Kendi karakterimize ekle
+                playerGroup.add(penguinModelWrapper);
+
+                // Dans animasyonunu başlat
+                if (gltf.animations && gltf.animations.length > 0) {
+                    activeMixer = new THREE.AnimationMixer(rawModel);
+                    const action = activeMixer.clipAction(gltf.animations[0]);
+                    action.play();
+                }
+
+                // Botlara da ekle
+                bots.forEach(b => {
+                    const botCopy = penguinModelWrapper.clone();
+                    b.group.add(botCopy);
+                    if (gltf.animations && gltf.animations.length > 0) {
+                        const bMixer = new THREE.AnimationMixer(botCopy);
+                        bMixer.clipAction(gltf.animations[0]).play();
+                        botMixers.push(bMixer);
+                    }
+                });
+            },
+            undefined,
+            (err) => {
+                console.error("penguin.glb yüklenirken hata:", err);
+            }
+        );
 
         function createNameTag(name) {
             try {
@@ -512,8 +484,6 @@
         for (let i = 0; i < 5; i++) {
             const bGroup = new THREE.Group();
             bGroup.add(footShadow.clone());
-            const bPenguin = createPenguinObject();
-            bGroup.add(bPenguin.mesh);
             bGroup.add(createNameTag(botNames[i]));
 
             const ang = (i / 5) * Math.PI * 2;
@@ -522,23 +492,16 @@
 
             bots.push({
                 group: bGroup,
-                penguin: bPenguin,
                 name: botNames[i],
                 angle: Math.random() * Math.PI * 2,
-                speed: 0.08,
-                walkCycle: Math.random() * 5
+                speed: 0.08
             });
         }
 
         let socket = null;
-        try {
-            socket = io();
-        } catch(e) {
-            console.warn("Socket.io baglantisi kurulurken hata:", e);
-        }
+        try { socket = io(); } catch(e) {}
 
         function handleStartGame() {
-            // Giris ekranini aninda ve kesinlikle kapat
             startScreen.style.display = "none";
             isGameStarted = true;
 
@@ -547,12 +510,8 @@
             
             try {
                 playerGroup.add(createNameTag(myUsername));
-                if (socket) {
-                    socket.emit("joinGame", { username: myUsername });
-                }
-            } catch(err) {
-                console.error("Giris sonrasi hata:", err);
-            }
+                if (socket) socket.emit("joinGame", { username: myUsername });
+            } catch(err) {}
         }
 
         startBtn.addEventListener("click", handleStartGame);
@@ -572,7 +531,9 @@
         function animate() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
-            const elapsedTime = clock.getElapsedTime();
+
+            if (activeMixer) activeMixer.update(delta);
+            botMixers.forEach(m => m.update(delta));
 
             let forward = 0;
             let turn = 0;
@@ -597,35 +558,24 @@
             const elev = getTerrainElevation(playerGroup.position.x, playerGroup.position.z);
             playerGroup.position.y = THREE.MathUtils.lerp(playerGroup.position.y, elev.height, 0.3);
 
-            if (isSliding) {
-                myPenguin.mesh.rotation.x = THREE.MathUtils.lerp(myPenguin.mesh.rotation.x, Math.PI / 2.3, 0.2);
-                myPenguin.mesh.position.y = THREE.MathUtils.lerp(myPenguin.mesh.position.y, 0.38, 0.2);
-            } else if (isMoving) {
-                walkCycle += 0.22;
-                myPenguin.mesh.rotation.x = THREE.MathUtils.lerp(myPenguin.mesh.rotation.x, 0.12, 0.2);
-                myPenguin.mesh.rotation.z = Math.sin(walkCycle) * 0.15;
-                myPenguin.lFoot.rotation.x = Math.sin(walkCycle) * 0.55;
-                myPenguin.rFoot.rotation.x = -Math.sin(walkCycle) * 0.55;
-                myPenguin.lWing.rotation.z = -0.3 + Math.cos(walkCycle) * 0.3;
-                myPenguin.rWing.rotation.z = 0.3 - Math.cos(walkCycle) * 0.3;
-            } else {
-                myPenguin.mesh.rotation.x = THREE.MathUtils.lerp(myPenguin.mesh.rotation.x, 0, 0.2);
-                myPenguin.mesh.rotation.z = THREE.MathUtils.lerp(myPenguin.mesh.rotation.z, 0, 0.2);
-                myPenguin.mesh.position.y = Math.sin(elapsedTime * 2.5) * 0.04;
-                myPenguin.lFoot.rotation.x = 0;
-                myPenguin.rFoot.rotation.x = 0;
-                myPenguin.lWing.rotation.z = -0.15;
-                myPenguin.rWing.rotation.z = 0.15;
+            if (penguinModelWrapper) {
+                if (isSliding) {
+                    penguinModelWrapper.rotation.x = THREE.MathUtils.lerp(penguinModelWrapper.rotation.x, Math.PI / 2.3, 0.2);
+                    penguinModelWrapper.position.y = THREE.MathUtils.lerp(penguinModelWrapper.position.y, 0.38, 0.2);
+                } else if (isMoving) {
+                    walkCycle += 0.22;
+                    penguinModelWrapper.rotation.x = THREE.MathUtils.lerp(penguinModelWrapper.rotation.x, 0.12, 0.2);
+                    penguinModelWrapper.rotation.z = Math.sin(walkCycle) * 0.15;
+                } else {
+                    penguinModelWrapper.rotation.x = THREE.MathUtils.lerp(penguinModelWrapper.rotation.x, 0, 0.2);
+                    penguinModelWrapper.rotation.z = THREE.MathUtils.lerp(penguinModelWrapper.rotation.z, 0, 0.2);
+                }
             }
 
             bots.forEach(b => {
                 b.group.position.x -= Math.sin(b.angle) * b.speed;
                 b.group.position.z -= Math.cos(b.angle) * b.speed;
                 b.group.rotation.y = b.angle;
-                b.walkCycle += 0.18;
-                b.penguin.mesh.rotation.z = Math.sin(b.walkCycle) * 0.12;
-                b.penguin.lFoot.rotation.x = Math.sin(b.walkCycle) * 0.45;
-                b.penguin.rFoot.rotation.x = -Math.sin(b.walkCycle) * 0.45;
 
                 if (Math.abs(b.group.position.x) > arenaLimit - 6 || Math.abs(b.group.position.z) > arenaLimit - 6) {
                     b.angle = Math.atan2(b.group.position.x, b.group.position.z);
@@ -641,6 +591,7 @@
                 });
             }
 
+            // Kamera Takibi
             const camDist = 11.5;
             const camHeight = 5.4;
             camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerGroup.position.x + Math.sin(pAngle) * camDist, 0.08);
