@@ -292,7 +292,6 @@
         let myUsername = "Penguen";
 
         const scene = new THREE.Scene();
-        // Tatlı kış gökyüzü mavisi
         scene.background = new THREE.Color(0xbfe3f7);
         scene.fog = new THREE.FogExp2(0xbfe3f7, 0.003);
 
@@ -307,7 +306,6 @@
         const ambientLight = new THREE.AmbientLight(0xd4e9f7, 0.6);
         scene.add(ambientLight);
 
-        // Kış güneşi
         const sunLight = new THREE.DirectionalLight(0xfff6e6, 1.55);
         sunLight.position.set(90, 55, 80);
         sunLight.castShadow = true;
@@ -354,7 +352,6 @@
         icePond.receiveShadow = true;
         scene.add(icePond);
 
-        // Katı Engeller Dizisi (Evler, ağaçlar, fenerler)
         let solidObstacles = [];
 
         // ================= KARLI DAĞ TEPECİKLERİ =================
@@ -380,7 +377,6 @@
             hillMesh.receiveShadow = true;
             scene.add(hillMesh);
 
-            // Zirve Bayrağı
             const flagGroup = new THREE.Group();
             const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 5.2, 8), new THREE.MeshStandardMaterial({ color: 0x5c4033 }));
             pole.position.y = 2.6;
@@ -432,7 +428,7 @@
             return { height, onHill, slopeVector };
         }
 
-        // ================= YENİ: KARLI AHŞAP KASABA EVLERİ (CABINS) =================
+        // ================= KARLI AHŞAP KASABA EVLERİ =================
         let chimneySmokes = [];
         const woodWallMat = new THREE.MeshStandardMaterial({ color: 0x6f4e37, roughness: 0.85 });
         const roofWoodMat = new THREE.MeshStandardMaterial({ color: 0x4a3525, roughness: 0.8 });
@@ -443,7 +439,6 @@
         function createSnowCabin(x, z, rotY = 0, scale = 1.0) {
             const cabin = new THREE.Group();
 
-            // 1. Ahşap Kütük Gövde
             const bodyW = 7.5 * scale;
             const bodyH = 4.8 * scale;
             const bodyD = 6.2 * scale;
@@ -453,7 +448,6 @@
             body.receiveShadow = true;
             cabin.add(body);
 
-            // 2. Beşik Çatı Ahşabı
             const roofH = 3.6 * scale;
             const roofGeo = new THREE.ConeGeometry(bodyW * 0.78, roofH, 4);
             const roof = new THREE.Mesh(roofGeo, roofWoodMat);
@@ -463,7 +457,6 @@
             roof.castShadow = true;
             cabin.add(roof);
 
-            // 3. Çatı Üzerindeki Kalın Kar Tabakası
             const snowRoof = new THREE.Mesh(new THREE.ConeGeometry(bodyW * 0.82, roofH * 0.95, 4), snowRoofMat);
             snowRoof.position.y = bodyH + roofH / 2 + 0.15;
             snowRoof.rotation.y = Math.PI / 4;
@@ -471,25 +464,21 @@
             snowRoof.castShadow = true;
             cabin.add(snowRoof);
 
-            // 4. Sıcak Sarı Yanan Pencereler
             [-1.8 * scale, 1.8 * scale].forEach(offset => {
                 const win = new THREE.Mesh(new THREE.PlaneGeometry(1.4 * scale, 1.4 * scale), windowGlowMat);
                 win.position.set(offset, 2.6 * scale, bodyD / 2 + 0.05);
                 cabin.add(win);
             });
 
-            // 5. Ahşap Kapı
             const door = new THREE.Mesh(new THREE.PlaneGeometry(1.6 * scale, 2.6 * scale), roofWoodMat);
             door.position.set(0, 1.3 * scale, bodyD / 2 + 0.05);
             cabin.add(door);
 
-            // 6. Baca ve Tüten Duman
             const chimney = new THREE.Mesh(new THREE.BoxGeometry(1.0 * scale, 2.6 * scale, 1.0 * scale), chimneyMat);
             chimney.position.set(2.2 * scale, bodyH + roofH * 0.65, 0);
             chimney.castShadow = true;
             cabin.add(chimney);
 
-            // Baca Dumanı Pofudukları
             for (let i = 0; i < 3; i++) {
                 const puff = new THREE.Mesh(
                     new THREE.DodecahedronGeometry((0.45 + i * 0.15) * scale, 0),
@@ -500,7 +489,6 @@
                 chimneySmokes.push({ mesh: puff, baseY: puff.position.y, offset: Math.random() * 5 });
             }
 
-            // Kapı önü sıcak lamba ışığı
             const warmLight = new THREE.PointLight(0xffaa00, 1.4, 18);
             warmLight.position.set(0, 3.2 * scale, bodyD / 2 + 2.0);
             cabin.add(warmLight);
@@ -512,7 +500,6 @@
             solidObstacles.push({ x: x, z: z, radius: 5.5 * scale });
         }
 
-        // Kasabaya evleri yerleştir (göletin çevresinde minik bir köy meydanı oluşturur)
         createSnowCabin(-28, -25, 0.4, 1.1);
         createSnowCabin(32, -22, -0.6, 1.0);
         createSnowCabin(-32, 22, 1.2, 1.0);
@@ -520,13 +507,12 @@
         createSnowCabin(0, -42, 0, 1.2);
         createSnowCabin(0, 45, Math.PI, 1.2);
 
-        // ================= YENİ: SOKAK FENERLERİ (STREET LANTERNS) =================
+        // ================= SOKAK FENERLERİ =================
         const poleMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
         const lanternGlowMat = new THREE.MeshBasicMaterial({ color: 0xffd166 });
 
         function createStreetLantern(x, z) {
             const post = new THREE.Group();
-            
             const p = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 4.5, 8), poleMat);
             p.position.y = 2.25;
             p.castShadow = true;
@@ -550,31 +536,25 @@
             solidObstacles.push({ x: x, z: z, radius: 1.0 });
         }
 
-        // Göletin etrafındaki sokak fenerleri
-        [
-            { x: -18, z: -18 }, { x: 18, z: -18 }, { x: -18, z: 18 }, { x: 18, z: 18 }
-        ].forEach(pos => createStreetLantern(pos.x, pos.z));
+        [{ x: -18, z: -18 }, { x: 18, z: -18 }, { x: -18, z: 18 }, { x: 18, z: 18 }].forEach(pos => createStreetLantern(pos.x, pos.z));
 
-        // ================= YENİ: AHŞAP ÇİTLER (WOODEN FENCES) =================
+        // ================= AHŞAP ÇİTLER =================
         const fenceWoodMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85 });
 
         function createFence(x, z, rotY = 0) {
             const fGroup = new THREE.Group();
-            // İki dikey direk
             [-1.2, 1.2].forEach(pX => {
                 const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.6, 0.25), fenceWoodMat);
                 post.position.set(pX, 0.8, 0);
                 post.castShadow = true;
                 fGroup.add(post);
             });
-            // İki yatay tahta
             [0.6, 1.2].forEach(pY => {
                 const rail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.18, 0.12), fenceWoodMat);
                 rail.position.set(0, pY, 0);
                 rail.castShadow = true;
                 fGroup.add(rail);
             });
-            // Üstündeki minik kar tabakası
             const snowRail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 0.2), snowRoofMat);
             snowRail.position.set(0, 1.32, 0);
             fGroup.add(snowRail);
@@ -585,7 +565,6 @@
             solidObstacles.push({ x: x, z: z, radius: 1.3 });
         }
 
-        // Evlerin etrafına nostaljik çitler
         createFence(-20, -22, 0.2);
         createFence(20, -20, -0.4);
         createFence(-20, 20, 1.1);
@@ -793,7 +772,7 @@
             canvas.width = 256; canvas.height = 64;
             const ctx = canvas.getContext("2d");
             ctx.fillStyle = "rgba(2, 62, 138, 0.85)";
-            if (ctx.roundRect) ctx.roundRect(8, 8, 240, 48, 14); else ctx.rect(8, 8, 240, 48);
+            if (ctx.roundRect) ctx.roundRect(8, 8, 240, 48, 14); else ctx.fillRect(8, 8, 240, 48);
             ctx.fill();
             ctx.strokeStyle = "#90e0ef"; ctx.lineWidth = 3; ctx.stroke();
             ctx.font = "bold 26px 'Fredoka One', sans-serif";
@@ -808,22 +787,31 @@
 
         const gltfLoader = new THREE.GLTFLoader();
 
-        function loadPenguinModel() {
-            gltfLoader.load('./models/duck.glb', (gltf) => {
-                const model = gltf.scene;
-                model.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+        // Model dosya yolu: models/penguin.glb
+        const PENGUIN_MODEL_PATH = './models/penguin.glb';
 
+        function loadPenguinModel() {
+            gltfLoader.load(PENGUIN_MODEL_PATH, (gltf) => {
+                const model = gltf.scene;
+                model.traverse(c => { 
+                    if (c.isMesh) { 
+                        c.castShadow = true; 
+                        c.receiveShadow = true; 
+                    } 
+                });
+
+                // Sketchfab penguenini sahneye tam 2.4 birim ölçeğinde oturtma
                 const bBox = new THREE.Box3().setFromObject(model);
                 const bSize = new THREE.Vector3();
                 bBox.getSize(bSize);
                 const bCenter = new THREE.Vector3();
                 bBox.getCenter(bCenter);
-                const finalScale = 2.4 / (Math.max(bSize.x, bSize.y, bSize.z) || 1);
+                const maxDim = Math.max(bSize.x, bSize.y, bSize.z) || 1;
+                const finalScale = 2.4 / maxDim;
 
                 const wrapper = new THREE.Group();
+                model.position.set(-bCenter.x, -bBox.min.y, -bCenter.z);
                 wrapper.add(model);
-                model.rotation.set(0, Math.PI, 0);
-                model.position.set(-bCenter.x, -bBox.min.y - 0.22, -bCenter.z);
                 wrapper.scale.set(finalScale, finalScale, finalScale);
 
                 playerPenguinMesh = wrapper;
@@ -838,13 +826,15 @@
                 }
 
                 loadBots();
+            }, undefined, (err) => {
+                console.error("Penguen modeli yüklenemedi:", err);
             });
         }
 
         function loadBots() {
             const botNames = ["Buzlu", "Piko", "Fındık", "Kar_Topu", "Paytak"];
             for (let i = 0; i < 5; i++) {
-                gltfLoader.load('./models/duck.glb', (botGltf) => {
+                gltfLoader.load(PENGUIN_MODEL_PATH, (botGltf) => {
                     const bModel = botGltf.scene;
                     bModel.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
 
@@ -853,11 +843,11 @@
                     bBox.getSize(bSize);
                     const bCenter = new THREE.Vector3();
                     bBox.getCenter(bCenter);
-                    const finalScale = 2.4 / (Math.max(bSize.x, bSize.y, bSize.z) || 1);
+                    const maxDim = Math.max(bSize.x, bSize.y, bSize.z) || 1;
+                    const finalScale = 2.4 / maxDim;
 
                     const bWrapper = new THREE.Group();
-                    bModel.rotation.set(0, Math.PI, 0);
-                    bModel.position.set(-bCenter.x, -bBox.min.y - 0.22, -bCenter.z);
+                    bModel.position.set(-bCenter.x, -bBox.min.y, -bCenter.z);
                     bWrapper.scale.set(finalScale, finalScale, finalScale);
                     bWrapper.add(bModel);
 
@@ -907,7 +897,7 @@
             pGroup.position.set(playerInfo.x || 0, playerInfo.y || 0, playerInfo.z || 0);
             pGroup.add(footShadow.clone());
 
-            gltfLoader.load('./models/duck.glb', (oGltf) => {
+            gltfLoader.load(PENGUIN_MODEL_PATH, (oGltf) => {
                 const oModel = oGltf.scene;
                 oModel.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
                 const bBox = new THREE.Box3().setFromObject(oModel);
@@ -915,11 +905,11 @@
                 bBox.getSize(bSize);
                 const bCenter = new THREE.Vector3();
                 bBox.getCenter(bCenter);
-                const finalScale = 2.4 / (Math.max(bSize.x, bSize.y, bSize.z) || 1);
+                const maxDim = Math.max(bSize.x, bSize.y, bSize.z) || 1;
+                const finalScale = 2.4 / maxDim;
 
                 const oWrap = new THREE.Group();
-                oModel.rotation.set(0, Math.PI, 0);
-                oModel.position.set(-bCenter.x, -bBox.min.y - 0.22, -bCenter.z);
+                oModel.position.set(-bCenter.x, -bBox.min.y, -bCenter.z);
                 oWrap.scale.set(finalScale, finalScale, finalScale);
                 oWrap.add(oModel);
                 pGroup.add(oWrap);
@@ -1154,7 +1144,6 @@
                 hItem.flag.rotation.y = Math.PI / 2 + Math.sin(elapsedTime * 3.5 + hItem.offset) * 0.35;
             });
 
-            // Baca dumanları göğe doğru hafifçe yükselir
             chimneySmokes.forEach(s => {
                 s.mesh.position.y = s.baseY + Math.sin(elapsedTime * 2.2 + s.offset) * 0.35;
                 s.mesh.rotation.y += 0.015;
@@ -1299,7 +1288,6 @@
             let nextX = playerGroup.position.x - Math.sin(duckAngle) * currentSpeed;
             let nextZ = playerGroup.position.z - Math.cos(duckAngle) * currentSpeed;
 
-            // Evler ve çitlerle çarpışma kontrolü
             for (let obs of solidObstacles) {
                 if (Math.hypot(nextX - obs.x, nextZ - obs.z) < 1.6 + obs.radius) {
                     nextX = playerGroup.position.x;
@@ -1426,9 +1414,9 @@
                     b.group.rotation.y = b.angle;
 
                     b.walkCycle += 0.16;
-                    if (b.mesh) {
-                        b.mesh.rotation.z = Math.sin(b.walkCycle) * 0.14;
-                        b.mesh.position.y = Math.abs(Math.sin(b.walkCycle)) * 0.04;
+                    if (b.group.children[0]) {
+                        b.group.children[0].rotation.z = Math.sin(b.walkCycle) * 0.14;
+                        b.group.children[0].position.y = Math.abs(Math.sin(b.walkCycle)) * 0.04;
                     }
                     if (Math.abs(b.group.position.x) > arenaLimit - 6 || Math.abs(b.group.position.z) > arenaLimit - 6) {
                         b.angle = Math.atan2(b.group.position.x, b.group.position.z);
