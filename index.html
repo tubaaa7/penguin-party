@@ -271,7 +271,7 @@
     </div>
 
     <div id="controls-hint" class="arcade-pill">
-        🏡 <b>W/S:</b> Koş | <b>Shift:</b> Kay | <b>E / Tık:</b> Omuz At | <b>Space:</b> Balık Fırlat
+        🏡 <b>W/S:</b> Koş | <b>Shift:</b> Kay | <b>E / Tık:</b> Sağ Omuz At | <b>Space:</b> Balık Fırlat
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -782,8 +782,6 @@
 
         const gltfLoader = new THREE.GLTFLoader();
         const PENGUIN_MODEL_PATH = './models/penguin.glb';
-
-        // Animasyon kemiklerinin zemini delmesini önleyen dikey taban ofseti
         const PENGUIN_BASE_ELEVATION = 0.65;
 
         function loadPenguinModel() {
@@ -805,7 +803,6 @@
                 const finalScale = 2.4 / maxDim;
 
                 const wrapper = new THREE.Group();
-                // Ayak kemiklerinin zeminin altına inmesini engelleyen tam ofset
                 model.position.set(-bCenter.x, -bBox.min.y + PENGUIN_BASE_ELEVATION, -bCenter.z);
                 wrapper.add(model);
                 wrapper.scale.set(finalScale, finalScale, finalScale);
@@ -1022,14 +1019,17 @@
             scoreEl.innerText = score;
         }
 
+        // ================= YENİ: SAĞ OMUZ ATMA =================
         function triggerShoulderBump() {
             if (!isGameStarted || isSlapping) return;
 
             isSlapping = true;
             slapTimer = 18;
 
-            const forwardX = -Math.sin(duckAngle);
-            const forwardZ = -Math.cos(duckAngle);
+            // Sağ omzu öne doğru çıkartarak sağ-ön çapraza vuruş vektörü
+            const rightOffsetAngle = duckAngle - 0.45;
+            const forwardX = -Math.sin(rightOffsetAngle);
+            const forwardZ = -Math.cos(rightOffsetAngle);
 
             let hitTarget = false;
 
@@ -1057,7 +1057,7 @@
                     if (dist < 2.5) {
                         b.knockbackX = forwardX * 1.5;
                         b.knockbackZ = forwardZ * 1.5;
-                        b.spinAngle = -0.65;
+                        b.spinAngle = 0.65; // Sağ omzun etkisiyle sağa doğru dönsün
 
                         spawnHitBurst(b.group.position.x, b.group.position.y + 1.2, b.group.position.z);
                         spawnDroppedCoins(b.group.position.x, b.group.position.y + 0.8, b.group.position.z, forwardX, forwardZ, 1);
@@ -1269,7 +1269,6 @@
                         spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 0.15, playerGroup.position.z);
                     }
                 } else if (slopeDot < -0.15) {
-                    // Tepeye çıkarken öne yatmayı sıfırlıyoruz ki ayaklar yamaca dalmasın
                     speedMultiplier = 0.72;
                     targetPitch = 0.0; 
                 }
@@ -1297,7 +1296,6 @@
             if (Math.abs(nextX) < arenaLimit) playerGroup.position.x = nextX;
             if (Math.abs(nextZ) < arenaLimit) playerGroup.position.z = nextZ;
 
-            // Zemin yüksekliğini hesapla; tepeye çıkarken ayak batmaması için anlık yüksekliği doğrudan baz al
             const nextElev = getTerrainElevation(playerGroup.position.x, playerGroup.position.z);
             const terrainHeight = nextElev.height;
             playerGroup.position.y = Math.max(terrainHeight, THREE.MathUtils.lerp(playerGroup.position.y, terrainHeight, 0.45));
@@ -1311,9 +1309,10 @@
                 });
             }
 
+            // Sağ omuz animasyonu: Pozitif yönde (sağa) salınım
             if (isSlapping) {
                 slapTimer--;
-                slapWingSwing = Math.sin((18 - slapTimer) / 18 * Math.PI) * 0.65;
+                slapWingSwing = Math.sin((18 - slapTimer) / 18 * Math.PI) * 0.75;
                 if (slapTimer <= 0) {
                     isSlapping = false;
                     slapWingSwing = 0;
@@ -1326,14 +1325,14 @@
                     walkCycle += isDownhill ? 0.35 : 0.22;
                     const waddle = Math.sin(walkCycle) * (isDownhill ? 0.05 : 0.14);
 
-                    playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.4, 0.2);
-                    // Ayakları asla eksiye düşürmeyen pozitif dikey tampon
+                    // Sağ omuz vururken gövde sağa doğru yatırılır (+slapWingSwing)
+                    playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.35, 0.2);
                     playerPenguinMesh.position.y = 0.12 + Math.abs(Math.sin(walkCycle)) * 0.05;
-                    playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, waddle + bodyRoll - slapWingSwing * 0.65, 0.3);
+                    playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, waddle + bodyRoll + slapWingSwing * 0.85, 0.3);
                 } else {
                     playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.35, 0.25);
                     playerPenguinMesh.position.y = THREE.MathUtils.lerp(playerPenguinMesh.position.y, 0.12, 0.2);
-                    playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, bodyRoll - slapWingSwing * 0.75, 0.3);
+                    playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, bodyRoll + slapWingSwing * 0.85, 0.3);
                 }
             }
 
