@@ -32,6 +32,7 @@
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 1;
         }
 
         #start-screen {
@@ -40,20 +41,12 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: radial-gradient(circle, rgba(200, 240, 255, 0.90) 0%, rgba(130, 205, 245, 0.96) 100%);
-            backdrop-filter: blur(6px);
+            background: radial-gradient(circle, rgba(200, 240, 255, 0.92) 0%, rgba(130, 205, 245, 0.98) 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 100;
-            transition: opacity 0.4s ease, visibility 0.4s;
-        }
-
-        #start-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+            z-index: 9999;
         }
 
         .menu-card {
@@ -236,7 +229,7 @@
         <div class="menu-card">
             <h1 class="game-logo">PENGUIN<br>PARTY!</h1>
             <input id="nickname-input" class="nickname-input" type="text" placeholder="Penguen İsmini Yaz..." maxlength="12" autofocus />
-            <button id="start-button" class="play-btn">KASABAYA GİR!</button>
+            <button id="start-button" class="play-btn" type="button">KASABAYA GİR!</button>
         </div>
     </div>
 
@@ -271,7 +264,7 @@
     </div>
 
     <div id="controls-hint" class="arcade-pill">
-        🐧 <b>W/S:</b> Paytak Yürü | <b>Shift:</b> Göbek Üstü Kay | <b>E / Tık:</b> Kanat Vur | <b>Space:</b> Balık Fırlat
+        🐧 <b>W/S:</b> Paytak Yürü | <b>Shift:</b> Göbek Üstü Kay | <b>E / Tık:</b> Vuruş | <b>Space:</b> Balık Fırlat
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -301,14 +294,12 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xd4e9f7, 0.75);
+        const ambientLight = new THREE.AmbientLight(0xd4e9f7, 0.85);
         scene.add(ambientLight);
 
-        const sunLight = new THREE.DirectionalLight(0xfff6e6, 1.55);
+        const sunLight = new THREE.DirectionalLight(0xfff6e6, 1.5);
         sunLight.position.set(90, 80, 80);
         sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
         scene.add(sunLight);
 
         const arenaSize = 280;
@@ -324,7 +315,7 @@
         // Donmuş Gölet
         const pondRadius = 42;
         const icePond = new THREE.Mesh(
-            new THREE.CircleGeometry(pondRadius, 64),
+            new THREE.CircleGeometry(pondRadius, 48),
             new THREE.MeshStandardMaterial({ color: 0x72ddf7, roughness: 0.08, transparent: true, opacity: 0.92 })
         );
         icePond.rotation.x = -Math.PI / 2;
@@ -348,8 +339,6 @@
             hillMesh.scale.set(h.radiusX, 1, h.radiusZ);
             hillMesh.rotation.y = h.rot;
             hillMesh.position.set(h.x, 0, h.z);
-            hillMesh.castShadow = true;
-            hillMesh.receiveShadow = true;
             scene.add(hillMesh);
         });
 
@@ -370,19 +359,17 @@
             return { height, onHill };
         }
 
-        // Ahşap Karlı Kulübeler
+        // Kulübeler
         const woodMat = new THREE.MeshStandardMaterial({ color: 0x6f4e37 });
         const roofMat = new THREE.MeshStandardMaterial({ color: 0xfafafa });
         function createCabin(x, z, rY = 0) {
             const g = new THREE.Group();
             const b = new THREE.Mesh(new THREE.BoxGeometry(7.5, 4.8, 6.2), woodMat);
             b.position.y = 2.4;
-            b.castShadow = true;
             g.add(b);
             const r = new THREE.Mesh(new THREE.ConeGeometry(6.2, 3.8, 4), roofMat);
             r.position.y = 4.8 + 1.9;
             r.rotation.y = Math.PI / 4;
-            r.castShadow = true;
             g.add(r);
             g.position.set(x, 0, z);
             g.rotation.y = rY;
@@ -393,8 +380,7 @@
         createCabin(-32, 22, 1.2);
         createCabin(28, 28, 2.6);
 
-        // ================= TAM DONANIMLI 3D PENGUEN ÜRETİCİ =================
-        // Sketchfab'daki sarı şapkalı, kırmızı ponponlu penguenin birebir modeli
+        // 3D Penguen Karakter Geometrisi
         const matBlack = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
         const matWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
         const matOrange = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3 });
@@ -402,90 +388,72 @@
         const matRedPom = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.6 });
         const matScarf = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 });
 
-        function createFullPenguin() {
+        function createPenguinObject() {
             const root = new THREE.Group();
 
-            // Gövde
-            const bodyGeo = new THREE.SphereGeometry(1.0, 20, 20);
+            const bodyGeo = new THREE.SphereGeometry(1.0, 18, 18);
             bodyGeo.scale(1.0, 1.28, 0.92);
             const body = new THREE.Mesh(bodyGeo, matBlack);
             body.position.y = 1.3;
             body.castShadow = true;
             root.add(body);
 
-            // Beyaz Göbek
             const bellyGeo = new THREE.SphereGeometry(0.82, 16, 16);
             bellyGeo.scale(0.88, 1.15, 0.45);
             const belly = new THREE.Mesh(bellyGeo, matWhite);
             belly.position.set(0, 1.25, 0.62);
             root.add(belly);
 
-            // Kafa
             const head = new THREE.Group();
             head.position.set(0, 2.38, 0.1);
-            const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.72, 18, 18), matBlack);
+            const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.72, 16, 16), matBlack);
             headMesh.castShadow = true;
             head.add(headMesh);
 
-            // Yüz Beyazlığı
-            const facePatch = new THREE.Mesh(new THREE.SphereGeometry(0.58, 16, 16), matWhite);
+            const facePatch = new THREE.Mesh(new THREE.SphereGeometry(0.58, 14, 14), matWhite);
             facePatch.scale.set(0.9, 0.78, 0.35);
             facePatch.position.set(0, 0.05, 0.46);
             head.add(facePatch);
 
-            // Gözler
             [-0.22, 0.22].forEach(ex => {
-                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
                 eye.position.set(ex, 0.14, 0.68);
                 head.add(eye);
-                const shine = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-                shine.position.set(ex + 0.03, 0.17, 0.75);
-                head.add(shine);
             });
 
-            // Gaga
-            const beak = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.48, 12), matOrange);
+            const beak = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.48, 10), matOrange);
             beak.rotation.x = Math.PI / 2;
             beak.position.set(0, 0.04, 0.82);
             head.add(beak);
 
-            // Sketchfab'daki Sarı Bere & Kırmızı Ponpon
-            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.85, 16), matYellowHat);
+            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.85, 14), matYellowHat);
             hat.position.set(0, 0.78, -0.05);
             hat.rotation.x = -0.18;
             head.add(hat);
 
-            const pompom = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), matRedPom);
+            const pompom = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), matRedPom);
             pompom.position.set(0, 1.25, -0.15);
             head.add(pompom);
-
             root.add(head);
 
-            // Çizgili Atkı
-            const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.17, 10, 24), matScarf);
+            const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.17, 8, 20), matScarf);
             scarf.rotation.x = Math.PI / 2;
             scarf.position.set(0, 2.18, 0.08);
             root.add(scarf);
 
-            // Kanatlar
             const wingGeo = new THREE.BoxGeometry(0.22, 0.95, 0.45);
             wingGeo.translate(0, -0.42, 0);
 
             const lWing = new THREE.Group();
             lWing.position.set(0.96, 1.7, 0);
-            const lWingMesh = new THREE.Mesh(wingGeo, matBlack);
-            lWingMesh.rotation.z = -0.15;
-            lWing.add(lWingMesh);
+            lWing.add(new THREE.Mesh(wingGeo, matBlack));
             root.add(lWing);
 
             const rWing = new THREE.Group();
             rWing.position.set(-0.96, 1.7, 0);
-            const rWingMesh = new THREE.Mesh(wingGeo, matBlack);
-            rWingMesh.rotation.z = 0.15;
-            rWing.add(rWingMesh);
+            rWing.add(new THREE.Mesh(wingGeo, matBlack));
             root.add(rWing);
 
-            // Ayaklar
             const footGeo = new THREE.BoxGeometry(0.44, 0.15, 0.65);
             footGeo.translate(0, 0.07, 0.18);
 
@@ -499,17 +467,9 @@
             rFoot.add(new THREE.Mesh(footGeo, matOrange));
             root.add(rFoot);
 
-            return {
-                mesh: root,
-                head,
-                lWing,
-                rWing,
-                lFoot,
-                rFoot
-            };
+            return { mesh: root, head, lWing, rWing, lFoot, rFoot };
         }
 
-        // Oyuncu Grubu
         const playerGroup = new THREE.Group();
         scene.add(playerGroup);
 
@@ -521,24 +481,29 @@
         footShadow.position.y = 0.02;
         playerGroup.add(footShadow);
 
-        const myPenguin = createFullPenguin();
+        const myPenguin = createPenguinObject();
         playerGroup.add(myPenguin.mesh);
 
         function createNameTag(name) {
-            const canvas = document.createElement("canvas");
-            canvas.width = 256; canvas.height = 64;
-            const ctx = canvas.getContext("2d");
-            ctx.fillStyle = "rgba(2, 62, 138, 0.85)";
-            if (ctx.roundRect) ctx.roundRect(8, 8, 240, 48, 14); else ctx.rect(8, 8, 240, 48);
-            ctx.fill();
-            ctx.font = "bold 26px 'Fredoka One', sans-serif";
-            ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText(name, 128, 32);
+            try {
+                const canvas = document.createElement("canvas");
+                canvas.width = 256; canvas.height = 64;
+                const ctx = canvas.getContext("2d");
+                ctx.fillStyle = "rgba(2, 62, 138, 0.85)";
+                ctx.fillRect(8, 8, 240, 48);
+                ctx.font = "bold 26px sans-serif";
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(name, 128, 32);
 
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false }));
-            sprite.scale.set(3.4, 0.85, 1);
-            sprite.position.set(0, 3.4, 0);
-            return sprite;
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false }));
+                sprite.scale.set(3.4, 0.85, 1);
+                sprite.position.set(0, 3.4, 0);
+                return sprite;
+            } catch(e) {
+                return new THREE.Group();
+            }
         }
 
         // Botlar
@@ -547,7 +512,7 @@
         for (let i = 0; i < 5; i++) {
             const bGroup = new THREE.Group();
             bGroup.add(footShadow.clone());
-            const bPenguin = createFullPenguin();
+            const bPenguin = createPenguinObject();
             bGroup.add(bPenguin.mesh);
             bGroup.add(createNameTag(botNames[i]));
 
@@ -559,48 +524,41 @@
                 group: bGroup,
                 penguin: bPenguin,
                 name: botNames[i],
-                score: 0,
                 angle: Math.random() * Math.PI * 2,
                 speed: 0.08,
                 walkCycle: Math.random() * 5
             });
         }
 
-        const socket = io();
-        const otherPlayers = {};
-
-        socket.on("currentPlayers", (players) => {
-            Object.keys(players).forEach(id => {
-                if (id !== socket.id && !otherPlayers[id]) {
-                    const pGroup = new THREE.Group();
-                    pGroup.add(footShadow.clone());
-                    pGroup.add(createNameTag(players[id].username || "Penguen"));
-                    const oPenguin = createFullPenguin();
-                    pGroup.add(oPenguin.mesh);
-                    scene.add(pGroup);
-                    otherPlayers[id] = { group: pGroup, penguin: oPenguin, targetPos: new THREE.Vector3(), targetRot: 0, walkCycle: 0 };
-                }
-            });
-        });
-
-        socket.on("playerMoved", (info) => {
-            if (otherPlayers[info.id]) {
-                otherPlayers[info.id].targetPos.set(info.x, info.y || 0, info.z);
-                otherPlayers[info.id].targetRot = info.rotation;
-            }
-        });
+        let socket = null;
+        try {
+            socket = io();
+        } catch(e) {
+            console.warn("Socket.io baglantisi kurulurken hata:", e);
+        }
 
         function handleStartGame() {
+            // Giris ekranini aninda ve kesinlikle kapat
+            startScreen.style.display = "none";
+            isGameStarted = true;
+
             const val = nicknameInput.value.trim();
             myUsername = val !== "" ? val : "Penguen_" + Math.floor(Math.random() * 900 + 100);
-            startScreen.classList.add("hidden");
-            isGameStarted = true;
-            playerGroup.add(createNameTag(myUsername));
-            socket.emit("joinGame", { username: myUsername });
+            
+            try {
+                playerGroup.add(createNameTag(myUsername));
+                if (socket) {
+                    socket.emit("joinGame", { username: myUsername });
+                }
+            } catch(err) {
+                console.error("Giris sonrasi hata:", err);
+            }
         }
 
         startBtn.addEventListener("click", handleStartGame);
-        nicknameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") handleStartGame(); });
+        nicknameInput.addEventListener("keydown", (e) => { 
+            if (e.key === "Enter") handleStartGame(); 
+        });
 
         let keys = {};
         let pAngle = 0;
@@ -631,4 +589,75 @@
 
             const isMoving = Math.abs(forward) > 0.01;
             const isSliding = keys["shift"];
-            const currentSpeed = (isSliding ? 0.6 : 0.35)
+            const currentSpeed = (isSliding ? 0.6 : 0.35) * forward;
+
+            playerGroup.position.x -= Math.sin(pAngle) * currentSpeed;
+            playerGroup.position.z -= Math.cos(pAngle) * currentSpeed;
+
+            const elev = getTerrainElevation(playerGroup.position.x, playerGroup.position.z);
+            playerGroup.position.y = THREE.MathUtils.lerp(playerGroup.position.y, elev.height, 0.3);
+
+            if (isSliding) {
+                myPenguin.mesh.rotation.x = THREE.MathUtils.lerp(myPenguin.mesh.rotation.x, Math.PI / 2.3, 0.2);
+                myPenguin.mesh.position.y = THREE.MathUtils.lerp(myPenguin.mesh.position.y, 0.38, 0.2);
+            } else if (isMoving) {
+                walkCycle += 0.22;
+                myPenguin.mesh.rotation.x = THREE.MathUtils.lerp(myPenguin.mesh.rotation.x, 0.12, 0.2);
+                myPenguin.mesh.rotation.z = Math.sin(walkCycle) * 0.15;
+                myPenguin.lFoot.rotation.x = Math.sin(walkCycle) * 0.55;
+                myPenguin.rFoot.rotation.x = -Math.sin(walkCycle) * 0.55;
+                myPenguin.lWing.rotation.z = -0.3 + Math.cos(walkCycle) * 0.3;
+                myPenguin.rWing.rotation.z = 0.3 - Math.cos(walkCycle) * 0.3;
+            } else {
+                myPenguin.mesh.rotation.x = THREE.MathUtils.lerp(myPenguin.mesh.rotation.x, 0, 0.2);
+                myPenguin.mesh.rotation.z = THREE.MathUtils.lerp(myPenguin.mesh.rotation.z, 0, 0.2);
+                myPenguin.mesh.position.y = Math.sin(elapsedTime * 2.5) * 0.04;
+                myPenguin.lFoot.rotation.x = 0;
+                myPenguin.rFoot.rotation.x = 0;
+                myPenguin.lWing.rotation.z = -0.15;
+                myPenguin.rWing.rotation.z = 0.15;
+            }
+
+            bots.forEach(b => {
+                b.group.position.x -= Math.sin(b.angle) * b.speed;
+                b.group.position.z -= Math.cos(b.angle) * b.speed;
+                b.group.rotation.y = b.angle;
+                b.walkCycle += 0.18;
+                b.penguin.mesh.rotation.z = Math.sin(b.walkCycle) * 0.12;
+                b.penguin.lFoot.rotation.x = Math.sin(b.walkCycle) * 0.45;
+                b.penguin.rFoot.rotation.x = -Math.sin(b.walkCycle) * 0.45;
+
+                if (Math.abs(b.group.position.x) > arenaLimit - 6 || Math.abs(b.group.position.z) > arenaLimit - 6) {
+                    b.angle = Math.atan2(b.group.position.x, b.group.position.z);
+                }
+            });
+
+            if (isGameStarted && isMoving && socket) {
+                socket.emit("playerMovement", {
+                    x: playerGroup.position.x,
+                    y: playerGroup.position.y,
+                    z: playerGroup.position.z,
+                    rotation: pAngle
+                });
+            }
+
+            const camDist = 11.5;
+            const camHeight = 5.4;
+            camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerGroup.position.x + Math.sin(pAngle) * camDist, 0.08);
+            camera.position.y = THREE.MathUtils.lerp(camera.position.y, playerGroup.position.y + camHeight, 0.1);
+            camera.position.z = THREE.MathUtils.lerp(camera.position.z, playerGroup.position.z + Math.cos(pAngle) * camDist, 0.08);
+            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
