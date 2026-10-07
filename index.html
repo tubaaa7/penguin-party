@@ -357,7 +357,7 @@
         auroraMesh.rotation.x = 0.18;
         scene.add(auroraMesh);
 
-        // ================= 1. DIŞ ÇEVRE: DEV UZAK BUZUL DAĞLARI (360° SIRA DAĞLAR) =================
+        // ================= DIŞ ÇEVRE: DEV UZAK BUZUL DAĞLARI =================
         const distantMountainMat = new THREE.MeshStandardMaterial({ color: 0xd8ecf8, roughness: 0.6, flatShading: true });
         const mountainRadius = 185;
         const mountainCount = 28;
@@ -378,7 +378,7 @@
             scene.add(mMesh);
         }
 
-        // ================= 2. DIŞ ÇEVRE: BUZDAĞLARI (ICEBERGS) =================
+        // ================= DIŞ ÇEVRE: BUZDAĞLARI (ICEBERGS) =================
         const icebergMat = new THREE.MeshStandardMaterial({ color: 0xa5f3fc, roughness: 0.25, metalness: 0.15, flatShading: true });
         function createIceberg(x, z, scale = 1.0) {
             const geo = new THREE.DodecahedronGeometry(8 * scale, 1);
@@ -392,65 +392,6 @@
         createIceberg(120, 65, 1.4);
         createIceberg(-115, 80, 1.2);
         createIceberg(110, -90, 1.5);
-
-        // ================= 3. GÖLET KENARI: AHŞAP BALIKÇI İSKELESİ & SANDAL =================
-        const pierWoodMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.85 });
-        const pier = new THREE.Group();
-        // İskele ayakları
-        [-1.6, 1.6].forEach(pX => {
-            const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 2.5, 8), pierWoodMat);
-            pil.position.set(pX, 0.8, 14);
-            pier.add(pil);
-        });
-        // İskele Tahtaları
-        const plank = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.22, 12), pierWoodMat);
-        plank.position.set(0, 0.45, 10);
-        pier.add(plank);
-
-        // Balıkçı Sandalı
-        const boat = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.2, 6.2, 12, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.8 }));
-        boat.rotation.x = Math.PI / 2;
-        boat.rotation.z = Math.PI / 2;
-        boat.position.set(3.4, 0.35, 13);
-        pier.add(boat);
-
-        // Balık Kasaları
-        const crateMat = new THREE.MeshStandardMaterial({ color: 0xa16207 });
-        [-1.0, 0.8].forEach((cX, idx) => {
-            const crate = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.8, 1.0), crateMat);
-            crate.position.set(cX, 0.9, 8 + idx * 1.5);
-            pier.add(crate);
-        });
-
-        pier.position.set(0, 0, -32);
-        scene.add(pier);
-        solidObstacles.push({ x: 0, z: -32, radius: 4.5 });
-
-        // ================= 4. KASABA MEYDANI: YÖN TABELALARI =================
-        function createSignPost(x, z) {
-            const post = new THREE.Group();
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 3.8, 8), pierWoodMat);
-            pole.position.y = 1.9;
-            post.add(pole);
-
-            const signs = [
-                { text: "🐟 Balık Pazarı", rot: 0.3, y: 3.2, col: 0x0284c7 },
-                { text: "❄️ İglo Köyü", rot: -0.6, y: 2.6, col: 0x059669 },
-                { text: "⛸️ Buz Pisti", rot: 1.2, y: 2.0, col: 0xd97706 }
-            ];
-
-            signs.forEach(s => {
-                const sBoard = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.45, 0.12), new THREE.MeshStandardMaterial({ color: s.col }));
-                sBoard.position.set(0.6, s.y, 0);
-                sBoard.rotation.y = s.rot;
-                post.add(sBoard);
-            });
-
-            post.position.set(x, 0, z);
-            scene.add(post);
-            solidObstacles.push({ x: x, z: z, radius: 1.2 });
-        }
-        createSignPost(-8, -12);
 
         // ================= KARLI DAĞ TEPECİKLERİ =================
         const hillRamps = [
@@ -740,6 +681,7 @@
         // ================= SOKAK FENERLERİ =================
         const poleMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
         const lanternGlowMat = new THREE.MeshBasicMaterial({ color: 0xffd166 });
+        const snowRoofMat2 = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.75 });
 
         function createStreetLantern(x, z) {
             const post = new THREE.Group();
@@ -752,7 +694,7 @@
             lantern.position.y = 4.4;
             post.add(lantern);
 
-            const lCap = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.45, 4), snowRoofMat);
+            const lCap = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.45, 4), snowRoofMat2);
             lCap.position.y = 4.95;
             lCap.rotation.y = Math.PI / 4;
             post.add(lCap);
@@ -785,7 +727,7 @@
                 rail.castShadow = true;
                 fGroup.add(rail);
             });
-            const snowRail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 0.2), snowRoofMat);
+            const snowRail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 0.2), snowRoofMat2);
             snowRail.position.set(0, 1.32, 0);
             fGroup.add(snowRail);
 
