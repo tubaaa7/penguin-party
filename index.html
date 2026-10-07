@@ -786,8 +786,6 @@
         }
 
         const gltfLoader = new THREE.GLTFLoader();
-
-        // Model dosya yolu: models/penguin.glb
         const PENGUIN_MODEL_PATH = './models/penguin.glb';
 
         function loadPenguinModel() {
@@ -800,7 +798,6 @@
                     } 
                 });
 
-                // Sketchfab penguenini sahneye tam 2.4 birim ölçeğinde oturtma
                 const bBox = new THREE.Box3().setFromObject(model);
                 const bSize = new THREE.Vector3();
                 bBox.getSize(bSize);
@@ -810,7 +807,8 @@
                 const finalScale = 2.4 / maxDim;
 
                 const wrapper = new THREE.Group();
-                model.position.set(-bCenter.x, -bBox.min.y, -bCenter.z);
+                // Ayakların karın içine batmasını önleyen +0.28 dikey ofset
+                model.position.set(-bCenter.x, -bBox.min.y + 0.28, -bCenter.z);
                 wrapper.add(model);
                 wrapper.scale.set(finalScale, finalScale, finalScale);
 
@@ -847,7 +845,8 @@
                     const finalScale = 2.4 / maxDim;
 
                     const bWrapper = new THREE.Group();
-                    bModel.position.set(-bCenter.x, -bBox.min.y, -bCenter.z);
+                    // Botların ayakları için de +0.28 taban ofseti
+                    bModel.position.set(-bCenter.x, -bBox.min.y + 0.28, -bCenter.z);
                     bWrapper.scale.set(finalScale, finalScale, finalScale);
                     bWrapper.add(bModel);
 
@@ -909,7 +908,7 @@
                 const finalScale = 2.4 / maxDim;
 
                 const oWrap = new THREE.Group();
-                oModel.position.set(-bCenter.x, -bBox.min.y, -bCenter.z);
+                oModel.position.set(-bCenter.x, -bBox.min.y + 0.28, -bCenter.z);
                 oWrap.scale.set(finalScale, finalScale, finalScale);
                 oWrap.add(oModel);
                 pGroup.add(oWrap);
@@ -1327,11 +1326,12 @@
                     const waddle = Math.sin(walkCycle) * (isDownhill ? 0.05 : 0.18);
 
                     playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.4, 0.2);
-                    playerPenguinMesh.position.y = isDownhill ? -0.22 : Math.abs(Math.sin(walkCycle)) * 0.04;
+                    // Ayakların kara gömülmesini önleyen yüzey seviyesi
+                    playerPenguinMesh.position.y = isDownhill ? 0.05 : Math.abs(Math.sin(walkCycle)) * 0.06;
                     playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, waddle + bodyRoll - slapWingSwing * 0.65, 0.3);
                 } else {
                     playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.35, 0.25);
-                    playerPenguinMesh.position.y = THREE.MathUtils.lerp(playerPenguinMesh.position.y, 0, 0.2);
+                    playerPenguinMesh.position.y = THREE.MathUtils.lerp(playerPenguinMesh.position.y, 0.05, 0.2);
                     playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, bodyRoll - slapWingSwing * 0.75, 0.3);
                 }
             }
