@@ -293,7 +293,7 @@
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xbfe3f7);
-        scene.fog = new THREE.FogExp2(0xbfe3f7, 0.003);
+        scene.fog = new THREE.FogExp2(0xbfe3f7, 0.0024);
 
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
@@ -302,22 +302,14 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xd4e9f7, 0.65);
+        const ambientLight = new THREE.AmbientLight(0xd4e9f7, 0.7);
         scene.add(ambientLight);
 
         const sunLight = new THREE.DirectionalLight(0xfff6e6, 1.55);
-        sunLight.position.set(90, 55, 80);
+        sunLight.position.set(90, 65, 80);
         sunLight.castShadow = true;
         sunLight.shadow.mapSize.width = 2048;
         sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.near = 0.5;
-        sunLight.shadow.camera.far = 320;
-
-        const d = 115;
-        sunLight.shadow.camera.left = -d;
-        sunLight.shadow.camera.right = d;
-        sunLight.shadow.camera.top = d;
-        sunLight.shadow.camera.bottom = -d;
         sunLight.shadow.bias = -0.0004;
         scene.add(sunLight);
 
@@ -333,6 +325,7 @@
         snowFloor.receiveShadow = true;
         scene.add(snowFloor);
 
+        // Merkez Donmuş Kasaba Göleti
         const pondRadius = 42;
         const icePond = new THREE.Mesh(
             new THREE.CircleGeometry(pondRadius, 64),
@@ -351,18 +344,113 @@
 
         let solidObstacles = [];
 
-        // ================= KUZEY IŞIKLARI (AURORA BOREALIS) =================
-        const auroraGeo = new THREE.PlaneGeometry(240, 45, 24, 6);
+        // ================= KUZEY IŞIKLARI (AURORA) =================
+        const auroraGeo = new THREE.PlaneGeometry(280, 55, 32, 8);
         const auroraMat = new THREE.MeshBasicMaterial({
             color: 0x5eead4,
             transparent: true,
-            opacity: 0.25,
+            opacity: 0.26,
             side: THREE.DoubleSide
         });
         const auroraMesh = new THREE.Mesh(auroraGeo, auroraMat);
-        auroraMesh.position.set(0, 42, -120);
-        auroraMesh.rotation.x = 0.15;
+        auroraMesh.position.set(0, 48, -135);
+        auroraMesh.rotation.x = 0.18;
         scene.add(auroraMesh);
+
+        // ================= 1. DIŞ ÇEVRE: DEV UZAK BUZUL DAĞLARI (360° SIRA DAĞLAR) =================
+        const distantMountainMat = new THREE.MeshStandardMaterial({ color: 0xd8ecf8, roughness: 0.6, flatShading: true });
+        const mountainRadius = 185;
+        const mountainCount = 28;
+
+        for (let i = 0; i < mountainCount; i++) {
+            const angle = (i / mountainCount) * Math.PI * 2;
+            const dist = mountainRadius + (Math.sin(i * 3) * 18);
+            const mX = Math.cos(angle) * dist;
+            const mZ = Math.sin(angle) * dist;
+            const mH = 34 + (Math.abs(Math.cos(i * 2)) * 32);
+            const mW = 38 + (Math.abs(Math.sin(i * 4)) * 26);
+
+            const mGeo = new THREE.ConeGeometry(mW, mH, 5, 2);
+            mGeo.translate(0, mH / 2, 0);
+            const mMesh = new THREE.Mesh(mGeo, distantMountainMat);
+            mMesh.position.set(mX, -2, mZ);
+            mMesh.rotation.y = angle + Math.random() * 0.5;
+            scene.add(mMesh);
+        }
+
+        // ================= 2. DIŞ ÇEVRE: BUZDAĞLARI (ICEBERGS) =================
+        const icebergMat = new THREE.MeshStandardMaterial({ color: 0xa5f3fc, roughness: 0.25, metalness: 0.15, flatShading: true });
+        function createIceberg(x, z, scale = 1.0) {
+            const geo = new THREE.DodecahedronGeometry(8 * scale, 1);
+            const berg = new THREE.Mesh(geo, icebergMat);
+            berg.scale.set(1.4, 2.2, 1.2);
+            berg.position.set(x, 6 * scale, z);
+            berg.rotation.set(Math.random(), Math.random(), Math.random());
+            scene.add(berg);
+        }
+        createIceberg(-125, -60, 1.3);
+        createIceberg(120, 65, 1.4);
+        createIceberg(-115, 80, 1.2);
+        createIceberg(110, -90, 1.5);
+
+        // ================= 3. GÖLET KENARI: AHŞAP BALIKÇI İSKELESİ & SANDAL =================
+        const pierWoodMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.85 });
+        const pier = new THREE.Group();
+        // İskele ayakları
+        [-1.6, 1.6].forEach(pX => {
+            const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 2.5, 8), pierWoodMat);
+            pil.position.set(pX, 0.8, 14);
+            pier.add(pil);
+        });
+        // İskele Tahtaları
+        const plank = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.22, 12), pierWoodMat);
+        plank.position.set(0, 0.45, 10);
+        pier.add(plank);
+
+        // Balıkçı Sandalı
+        const boat = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.2, 6.2, 12, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.8 }));
+        boat.rotation.x = Math.PI / 2;
+        boat.rotation.z = Math.PI / 2;
+        boat.position.set(3.4, 0.35, 13);
+        pier.add(boat);
+
+        // Balık Kasaları
+        const crateMat = new THREE.MeshStandardMaterial({ color: 0xa16207 });
+        [-1.0, 0.8].forEach((cX, idx) => {
+            const crate = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.8, 1.0), crateMat);
+            crate.position.set(cX, 0.9, 8 + idx * 1.5);
+            pier.add(crate);
+        });
+
+        pier.position.set(0, 0, -32);
+        scene.add(pier);
+        solidObstacles.push({ x: 0, z: -32, radius: 4.5 });
+
+        // ================= 4. KASABA MEYDANI: YÖN TABELALARI =================
+        function createSignPost(x, z) {
+            const post = new THREE.Group();
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 3.8, 8), pierWoodMat);
+            pole.position.y = 1.9;
+            post.add(pole);
+
+            const signs = [
+                { text: "🐟 Balık Pazarı", rot: 0.3, y: 3.2, col: 0x0284c7 },
+                { text: "❄️ İglo Köyü", rot: -0.6, y: 2.6, col: 0x059669 },
+                { text: "⛸️ Buz Pisti", rot: 1.2, y: 2.0, col: 0xd97706 }
+            ];
+
+            signs.forEach(s => {
+                const sBoard = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.45, 0.12), new THREE.MeshStandardMaterial({ color: s.col }));
+                sBoard.position.set(0.6, s.y, 0);
+                sBoard.rotation.y = s.rot;
+                post.add(sBoard);
+            });
+
+            post.position.set(x, 0, z);
+            scene.add(post);
+            solidObstacles.push({ x: x, z: z, radius: 1.2 });
+        }
+        createSignPost(-8, -12);
 
         // ================= KARLI DAĞ TEPECİKLERİ =================
         const hillRamps = [
@@ -517,18 +605,15 @@
         createSnowCabin(0, -42, 0, 1.2);
         createSnowCabin(0, 45, Math.PI, 1.2);
 
-        // ================= BUZ İGLOLAR (IGLOOS) =================
+        // ================= BUZ İGLOLAR =================
         const iglooMat = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.45, metalness: 0.1, flatShading: true });
         function createIgloo(x, z, rotY = 0) {
             const igloo = new THREE.Group();
-            
-            // Kubbe
             const dome = new THREE.Mesh(new THREE.SphereGeometry(3.6, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), iglooMat);
             dome.castShadow = true;
             dome.receiveShadow = true;
             igloo.add(dome);
 
-            // Giriş tüneli
             const tunnel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 2.2, 12, 1, false, 0, Math.PI), iglooMat);
             tunnel.rotation.x = Math.PI / 2;
             tunnel.rotation.z = Math.PI / 2;
@@ -536,7 +621,6 @@
             tunnel.castShadow = true;
             igloo.add(tunnel);
 
-            // İçinden sızan tatlı gece lambası
             const iglooGlow = new THREE.PointLight(0xffbe0b, 1.3, 12);
             iglooGlow.position.set(0, 1.4, 2.0);
             igloo.add(iglooGlow);
@@ -550,7 +634,7 @@
         createIgloo(-46, -10, 1.2);
         createIgloo(46, 12, -2.1);
 
-        // ================= KARDAN ADAMLAR (SNOWMEN) =================
+        // ================= KARDAN ADAMLAR =================
         const snowmanBodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
         const coalMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
         const carrotMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.3 });
@@ -562,38 +646,32 @@
         function createSnowman(x, z) {
             const smGroup = new THREE.Group();
 
-            // Alt kartopu
             const bBall = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), snowmanBodyMat);
             bBall.position.y = 1.0;
             bBall.castShadow = true;
             smGroup.add(bBall);
 
-            // Üst kartopu (Kafa)
             const headBall = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), snowmanBodyMat);
             headBall.position.y = 2.45;
             headBall.castShadow = true;
             smGroup.add(headBall);
 
-            // Kırmızı Atkı
             const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.16, 8, 16), scarfMat);
             scarf.rotation.x = Math.PI / 2;
             scarf.position.y = 2.0;
             smGroup.add(scarf);
 
-            // Kömür Gözler
             [-0.22, 0.22].forEach(ex => {
                 const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), coalMat);
                 eye.position.set(ex, 2.6, 0.72);
                 smGroup.add(eye);
             });
 
-            // Havuç Burun
             const carrot = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.48, 8), carrotMat);
             carrot.rotation.x = Math.PI / 2;
             carrot.position.set(0, 2.45, 0.95);
             smGroup.add(carrot);
 
-            // Şapka
             const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.08, 16), hatMat);
             hatBrim.position.y = 3.1;
             smGroup.add(hatBrim);
@@ -634,7 +712,6 @@
                 cap.position.y = 4.3 + lvl * 1.8;
                 tree.add(cap);
 
-                // Katlara sarılı rengarenk peri ışıkları
                 const lightColors = [0xff0054, 0xffbe0b, 0x06d6a0, 0x3a86ff, 0xff006e];
                 for (let k = 0; k < 6; k++) {
                     const ang = (k / 6) * Math.PI * 2 + lvl * 0.6;
@@ -646,7 +723,6 @@
                 }
             }
 
-            // Tepe Yıldızı
             const star = new THREE.Mesh(new THREE.DodecahedronGeometry(0.7, 0), new THREE.MeshBasicMaterial({ color: 0xffe66d }));
             star.position.y = 10.4;
             tree.add(star);
@@ -659,8 +735,6 @@
             scene.add(tree);
             solidObstacles.push({ x: x, z: z, radius: 3.5 });
         }
-
-        // Göletin hemen doğu kıyısına dev ışıklı çam
         createTownChristmasTree(22, 0);
 
         // ================= SOKAK FENERLERİ =================
@@ -731,9 +805,9 @@
         const pineMat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.6, flatShading: true });
         const snowCapMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8, flatShading: true });
 
-        for (let i = 0; i < 55; i++) {
-            let tx = (Math.random() - 0.5) * (arenaSize - 40);
-            let tz = (Math.random() - 0.5) * (arenaSize - 40);
+        for (let i = 0; i < 75; i++) {
+            let tx = (Math.random() - 0.5) * (arenaSize - 20);
+            let tz = (Math.random() - 0.5) * (arenaSize - 20);
             if (Math.hypot(tx, tz) < pondRadius + 14) continue;
 
             const tree = new THREE.Group();
@@ -758,6 +832,7 @@
             solidObstacles.push({ x: tx, z: tz, radius: 2.0 });
         }
 
+        // Surlar
         const borderIceMat = new THREE.MeshStandardMaterial({ color: 0xc5f0f9, roughness: 0.2, metalness: 0.15, transparent: true, opacity: 0.88 });
         const half = arenaSize / 2;
         const wallH = 9.0;
@@ -776,6 +851,7 @@
             scene.add(wall);
         });
 
+        // Kar Yağışı
         const snowCount = 800;
         const snowGeo = new THREE.BufferGeometry();
         const snowPositions = new Float32Array(snowCount * 3);
@@ -1231,7 +1307,6 @@
                 }
             }
 
-            // Kardan adama omuz atınca sallanıp kar saçsın
             snowmen.forEach(sm => {
                 if (playerGroup.position.distanceTo(sm.group.position) < 2.8) {
                     sm.wobble = 0.45;
@@ -1306,17 +1381,14 @@
             const delta = clock.getDelta();
             const elapsedTime = clock.getElapsedTime();
 
-            // Kuzey ışıklarının dalgalanışı
-            auroraMesh.position.y = 42 + Math.sin(elapsedTime * 1.2) * 2.0;
+            auroraMesh.position.y = 48 + Math.sin(elapsedTime * 1.2) * 2.0;
             auroraMesh.material.opacity = 0.22 + Math.sin(elapsedTime * 1.8) * 0.08;
 
-            // Kasaba çamının peri ışıklarının parıldaması
             xmasLights.forEach(l => {
                 const s = Math.sin(elapsedTime * 4.0 + l.offset);
                 l.mesh.scale.setScalar(0.85 + s * 0.35);
             });
 
-            // Kardan adamların hafifçe sallanması
             snowmen.forEach(sm => {
                 if (sm.wobble > 0.01) {
                     sm.group.rotation.z = Math.sin(elapsedTime * 15.0) * sm.wobble;
