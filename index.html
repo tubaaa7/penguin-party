@@ -271,7 +271,7 @@
     </div>
 
     <div id="controls-hint" class="arcade-pill">
-        🏡 <b>W/S:</b> Koş | <b>Shift:</b> Kay | <b>E / Tık:</b> Sağ Omuz At | <b>Space:</b> Balık Fırlat
+        🥊 <b>E / Sol Tık:</b> Sağ Omuz At | <b>Shift:</b> Kay | <b>Space:</b> Balık Fırlat | <b>Dikkat:</b> Vurursan karşılık verirler!
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -344,7 +344,7 @@
 
         let solidObstacles = [];
 
-        // ================= KUZEY IŞIKLARI (AURORA) =================
+        // ================= KUZEY IŞIKLARI =================
         const auroraGeo = new THREE.PlaneGeometry(280, 55, 32, 8);
         const auroraMat = new THREE.MeshBasicMaterial({
             color: 0x5eead4,
@@ -357,7 +357,7 @@
         auroraMesh.rotation.x = 0.18;
         scene.add(auroraMesh);
 
-        // ================= DIŞ ÇEVRE: DEV UZAK BUZUL DAĞLARI =================
+        // ================= DEV UZAK BUZUL DAĞLARI =================
         const distantMountainMat = new THREE.MeshStandardMaterial({ color: 0xd8ecf8, roughness: 0.6, flatShading: true });
         const mountainRadius = 185;
         const mountainCount = 28;
@@ -378,7 +378,7 @@
             scene.add(mMesh);
         }
 
-        // ================= DIŞ ÇEVRE: BUZDAĞLARI (ICEBERGS) =================
+        // Buzdağları
         const icebergMat = new THREE.MeshStandardMaterial({ color: 0xa5f3fc, roughness: 0.25, metalness: 0.15, flatShading: true });
         function createIceberg(x, z, scale = 1.0) {
             const geo = new THREE.DodecahedronGeometry(8 * scale, 1);
@@ -467,7 +467,7 @@
             return { height, onHill, slopeVector };
         }
 
-        // ================= KARLI AHŞAP KASABA EVLERİ =================
+        // Karlı Ahşap Kasaba Evleri
         let chimneySmokes = [];
         const woodWallMat = new THREE.MeshStandardMaterial({ color: 0x6f4e37, roughness: 0.85 });
         const roofWoodMat = new THREE.MeshStandardMaterial({ color: 0x4a3525, roughness: 0.8 });
@@ -546,7 +546,7 @@
         createSnowCabin(0, -42, 0, 1.2);
         createSnowCabin(0, 45, Math.PI, 1.2);
 
-        // ================= BUZ İGLOLAR =================
+        // Buz İglolar
         const iglooMat = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.45, metalness: 0.1, flatShading: true });
         function createIgloo(x, z, rotY = 0) {
             const igloo = new THREE.Group();
@@ -575,7 +575,7 @@
         createIgloo(-46, -10, 1.2);
         createIgloo(46, 12, -2.1);
 
-        // ================= KARDAN ADAMLAR =================
+        // Kardan Adamlar
         const snowmanBodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
         const coalMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
         const carrotMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.3 });
@@ -583,18 +583,14 @@
         const scarfMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.6 });
 
         let snowmen = [];
-
         function createSnowman(x, z) {
             const smGroup = new THREE.Group();
-
             const bBall = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), snowmanBodyMat);
             bBall.position.y = 1.0;
-            bBall.castShadow = true;
             smGroup.add(bBall);
 
             const headBall = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), snowmanBodyMat);
             headBall.position.y = 2.45;
-            headBall.castShadow = true;
             smGroup.add(headBall);
 
             const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.16, 8, 16), scarfMat);
@@ -626,13 +622,12 @@
             snowmen.push({ group: smGroup, x: x, z: z, wobble: 0 });
             solidObstacles.push({ x: x, z: z, radius: 1.4 });
         }
-
         createSnowman(-14, -14);
         createSnowman(15, -12);
         createSnowman(-12, 14);
         createSnowman(16, 15);
 
-        // ================= IŞIKLI KASABA YILBAŞI ÇAMI =================
+        // Işıklı Kasaba Çamı
         let xmasLights = [];
         function createTownChristmasTree(x, z) {
             const tree = new THREE.Group();
@@ -678,71 +673,7 @@
         }
         createTownChristmasTree(22, 0);
 
-        // ================= SOKAK FENERLERİ =================
-        const poleMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
-        const lanternGlowMat = new THREE.MeshBasicMaterial({ color: 0xffd166 });
-        const snowRoofMat2 = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.75 });
-
-        function createStreetLantern(x, z) {
-            const post = new THREE.Group();
-            const p = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 4.5, 8), poleMat);
-            p.position.y = 2.25;
-            p.castShadow = true;
-            post.add(p);
-
-            const lantern = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), lanternGlowMat);
-            lantern.position.y = 4.4;
-            post.add(lantern);
-
-            const lCap = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.45, 4), snowRoofMat2);
-            lCap.position.y = 4.95;
-            lCap.rotation.y = Math.PI / 4;
-            post.add(lCap);
-
-            const light = new THREE.PointLight(0xffba08, 1.2, 16);
-            light.position.set(0, 4.4, 0);
-            post.add(light);
-
-            post.position.set(x, 0, z);
-            scene.add(post);
-            solidObstacles.push({ x: x, z: z, radius: 1.0 });
-        }
-
-        [{ x: -18, z: -18 }, { x: 18, z: -18 }, { x: -18, z: 18 }, { x: 18, z: 18 }].forEach(pos => createStreetLantern(pos.x, pos.z));
-
-        // ================= AHŞAP ÇİTLER =================
-        const fenceWoodMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85 });
-
-        function createFence(x, z, rotY = 0) {
-            const fGroup = new THREE.Group();
-            [-1.2, 1.2].forEach(pX => {
-                const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.6, 0.25), fenceWoodMat);
-                post.position.set(pX, 0.8, 0);
-                post.castShadow = true;
-                fGroup.add(post);
-            });
-            [0.6, 1.2].forEach(pY => {
-                const rail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.18, 0.12), fenceWoodMat);
-                rail.position.set(0, pY, 0);
-                rail.castShadow = true;
-                fGroup.add(rail);
-            });
-            const snowRail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 0.2), snowRoofMat2);
-            snowRail.position.set(0, 1.32, 0);
-            fGroup.add(snowRail);
-
-            fGroup.position.set(x, 0, z);
-            fGroup.rotation.y = rotY;
-            scene.add(fGroup);
-            solidObstacles.push({ x: x, z: z, radius: 1.3 });
-        }
-
-        createFence(-20, -22, 0.2);
-        createFence(20, -20, -0.4);
-        createFence(-20, 20, 1.1);
-        createFence(20, 22, -1.2);
-
-        // ================= KARLI ÇAM AĞAÇLARI =================
+        // Karlı Çam Ağaçları
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.8 });
         const pineMat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.6, flatShading: true });
         const snowCapMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8, flatShading: true });
@@ -755,18 +686,15 @@
             const tree = new THREE.Group();
             const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 3, 8), trunkMat);
             trunk.position.y = 1.5;
-            trunk.castShadow = true;
             tree.add(trunk);
 
             for (let lvl = 0; lvl < 3; lvl++) {
                 const pine = new THREE.Mesh(new THREE.ConeGeometry(2.4 - lvl * 0.6, 2.2, 7), pineMat);
                 pine.position.y = 2.6 + lvl * 1.3;
-                pine.castShadow = true;
                 tree.add(pine);
 
                 const cap = new THREE.Mesh(new THREE.ConeGeometry(2.1 - lvl * 0.6, 0.8, 7), snowCapMat);
                 cap.position.y = 3.2 + lvl * 1.3;
-                cap.castShadow = true;
                 tree.add(cap);
             }
             tree.position.set(tx, 0, tz);
@@ -788,8 +716,6 @@
         ].forEach(bw => {
             const wall = new THREE.Mesh(new THREE.BoxGeometry(bw.w, wallH, bw.d), borderIceMat);
             wall.position.set(bw.x, wallH / 2, bw.z);
-            wall.castShadow = true;
-            wall.receiveShadow = true;
             scene.add(wall);
         });
 
@@ -815,7 +741,6 @@
             const coinGroup = new THREE.Group();
             const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.18, 24), goldCoinMat);
             disc.rotation.x = Math.PI / 2;
-            disc.castShadow = true;
             coinGroup.add(disc);
 
             [-0.10, 0.10].forEach(zPos => {
@@ -909,12 +834,10 @@
             const body = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.1, 10), fishBodyMat);
             body.rotation.x = Math.PI / 2;
             body.scale.set(1, 0.45, 1.6);
-            body.castShadow = true;
             fGroup.add(body);
             const tail = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.4, 6), fishTailMat);
             tail.position.z = 0.8;
             tail.rotation.x = -Math.PI / 2;
-            tail.castShadow = true;
             fGroup.add(tail);
             fGroup.scale.set(1.4, 1.4, 1.4);
             return fGroup;
@@ -944,14 +867,14 @@
         let myKnockbackX = 0;
         let myKnockbackZ = 0;
 
-        function createNameTag(name) {
+        function createNameTag(name, isAngry = false) {
             const canvas = document.createElement("canvas");
             canvas.width = 256; canvas.height = 64;
             const ctx = canvas.getContext("2d");
-            ctx.fillStyle = "rgba(2, 62, 138, 0.85)";
+            ctx.fillStyle = isAngry ? "rgba(220, 38, 38, 0.90)" : "rgba(2, 62, 138, 0.85)";
             if (ctx.roundRect) ctx.roundRect(8, 8, 240, 48, 14); else ctx.fillRect(8, 8, 240, 48);
             ctx.fill();
-            ctx.strokeStyle = "#90e0ef"; ctx.lineWidth = 3; ctx.stroke();
+            ctx.strokeStyle = isAngry ? "#fca5a5" : "#90e0ef"; ctx.lineWidth = 3; ctx.stroke();
             ctx.font = "bold 26px 'Fredoka One', sans-serif";
             ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
             ctx.fillText(name, 128, 32);
@@ -970,10 +893,7 @@
             gltfLoader.load(PENGUIN_MODEL_PATH, (gltf) => {
                 const model = gltf.scene;
                 model.traverse(c => { 
-                    if (c.isMesh) { 
-                        c.castShadow = true; 
-                        c.receiveShadow = true; 
-                    } 
+                    if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } 
                 });
 
                 const bBox = new THREE.Box3().setFromObject(model);
@@ -1033,7 +953,8 @@
 
                     bGroup.add(bWrapper);
                     bGroup.add(footShadow.clone());
-                    bGroup.add(createNameTag(botNames[i]));
+                    const tag = createNameTag(botNames[i]);
+                    bGroup.add(tag);
 
                     scene.add(bGroup);
 
@@ -1048,13 +969,18 @@
                     bots.push({
                         group: bGroup,
                         name: botNames[i],
+                        tag: tag,
                         score: 0,
                         angle: Math.random() * Math.PI * 2,
                         speed: 0.07 + Math.random() * 0.03,
                         walkCycle: Math.random() * 10,
                         knockbackX: 0,
                         knockbackZ: 0,
-                        spinAngle: 0
+                        spinAngle: 0,
+                        isAggro: false,
+                        aggroTimer: 0,
+                        attackCooldown: 0,
+                        shoulderAnim: 0
                     });
                 });
             }
@@ -1201,6 +1127,7 @@
             scoreEl.innerText = score;
         }
 
+        // ================= SAĞ OMUZ ATMA VE KOMİK KAVGA ÇAĞRISI =================
         function triggerShoulderBump() {
             if (!isGameStarted || isSlapping) return;
 
@@ -1234,10 +1161,25 @@
             if (!hitTarget) {
                 for (let b of bots) {
                     const dist = playerGroup.position.distanceTo(b.group.position);
-                    if (dist < 2.5) {
+                    if (dist < 2.6) {
                         b.knockbackX = forwardX * 1.5;
                         b.knockbackZ = forwardZ * 1.5;
                         b.spinAngle = 0.65;
+
+                        // Bot sinirlenir ve oyuncuya karşı saldırıya geçer!
+                        b.isAggro = true;
+                        b.aggroTimer = 240; // 4 saniye boyunca oyuncuyu kovalar
+                        b.group.remove(b.tag);
+                        b.tag = createNameTag(`😡 ${b.name}`, true);
+                        b.group.add(b.tag);
+
+                        // Yakındaki diğer bir botu da kavgaya kışkırt
+                        bots.forEach(otherB => {
+                            if (otherB !== b && b.group.position.distanceTo(otherB.group.position) < 14) {
+                                otherB.isAggro = true;
+                                otherB.aggroTimer = 180;
+                            }
+                        });
 
                         spawnHitBurst(b.group.position.x, b.group.position.y + 1.2, b.group.position.z);
                         spawnDroppedCoins(b.group.position.x, b.group.position.y + 0.8, b.group.position.z, forwardX, forwardZ, 1);
@@ -1427,7 +1369,8 @@
             if (playerMixer) playerMixer.update(delta);
             botMixers.forEach(m => m.update(delta));
 
-            if (Math.abs(myKnockbackX) > 0.05 || Math.abs(myKnockbackZ) > 0.05) {
+            // Oyuncunun darbe yiyip geriye savrulması
+            if (Math.abs(myKnockbackX) > 0.04 || Math.abs(myKnockbackZ) > 0.04) {
                 playerGroup.position.x += myKnockbackX;
                 playerGroup.position.z += myKnockbackZ;
                 myKnockbackX *= 0.88;
@@ -1587,6 +1530,8 @@
                             b.knockbackX = f.dirX * 1.35;
                             b.knockbackZ = f.dirZ * 1.35;
                             b.spinAngle = 0.45;
+                            b.isAggro = true;
+                            b.aggroTimer = 220;
                             spawnHitBurst(b.group.position.x, b.group.position.y + 1.2, b.group.position.z);
                             spawnDroppedCoins(b.group.position.x, b.group.position.y + 0.8, b.group.position.z, f.dirX, f.dirZ);
                             addScore(100);
@@ -1602,7 +1547,11 @@
                 }
             }
 
+            // ================= BOT DAVRANIŞLARI & KARŞI SALDIRI KAVGA MOTORU =================
             bots.forEach(b => {
+                if (b.attackCooldown > 0) b.attackCooldown--;
+
+                // Geri tepme / Fırıldak dönme
                 if (Math.abs(b.knockbackX) > 0.04 || Math.abs(b.knockbackZ) > 0.04) {
                     b.group.position.x += b.knockbackX;
                     b.group.position.z += b.knockbackZ;
@@ -1611,19 +1560,85 @@
                     b.group.rotation.y += b.spinAngle;
                     b.spinAngle *= 0.88;
                 } else {
-                    b.group.position.x -= Math.sin(b.angle) * b.speed;
-                    b.group.position.z -= Math.cos(b.angle) * b.speed;
-                    b.group.rotation.y = b.angle;
+                    // Saldırgan modda mı? Oyuncuya doğru hızlıca koşup sağ omuz vurur!
+                    if (b.isAggro && isGameStarted) {
+                        b.aggroTimer--;
+                        const dx = playerGroup.position.x - b.group.position.x;
+                        const dz = playerGroup.position.z - b.group.position.z;
+                        const distToPlayer = Math.hypot(dx, dz);
 
-                    b.walkCycle += 0.16;
-                    if (b.group.children[0]) {
-                        b.group.children[0].rotation.z = Math.sin(b.walkCycle) * 0.14;
-                        b.group.children[0].position.y = 0.10 + Math.abs(Math.sin(b.walkCycle)) * 0.04;
+                        // Oyuncuya dön
+                        b.angle = Math.atan2(-dx, -dz);
+                        b.group.rotation.y = b.angle;
+
+                        // Kızgın penguen daha hızlı paytak koşar
+                        const attackSpeed = 0.16;
+                        b.group.position.x -= Math.sin(b.angle) * attackSpeed;
+                        b.group.position.z -= Math.cos(b.angle) * attackSpeed;
+                        b.walkCycle += 0.28;
+
+                        // Oyuncunun dibine girdiyse SAĞ OMUZ VUR!
+                        if (distToPlayer < 2.3 && b.attackCooldown <= 0) {
+                            b.attackCooldown = 50; // Tekrar vurmadan önce bekleme
+                            b.shoulderAnim = 16;
+
+                            // Oyuncuyu savur!
+                            const pushDirX = dx / distToPlayer;
+                            const pushDirZ = dz / distToPlayer;
+                            myKnockbackX = pushDirX * 1.5;
+                            myKnockbackZ = pushDirZ * 1.5;
+
+                            spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
+                            spawnDroppedCoins(playerGroup.position.x, playerGroup.position.y + 0.8, playerGroup.position.z, pushDirX, pushDirZ, 1);
+                        }
+
+                        // Öfkesi biterse normale dön
+                        if (b.aggroTimer <= 0) {
+                            b.isAggro = false;
+                            b.group.remove(b.tag);
+                            b.tag = createNameTag(b.name, false);
+                            b.group.add(b.tag);
+                        }
+                    } else {
+                        // Normal tatlı gezinme
+                        b.group.position.x -= Math.sin(b.angle) * b.speed;
+                        b.group.position.z -= Math.cos(b.angle) * b.speed;
+                        b.group.rotation.y = b.angle;
+                        b.walkCycle += 0.16;
+
+                        if (Math.abs(b.group.position.x) > arenaLimit - 6 || Math.abs(b.group.position.z) > arenaLimit - 6) {
+                            b.angle = Math.atan2(b.group.position.x, b.group.position.z);
+                        }
                     }
-                    if (Math.abs(b.group.position.x) > arenaLimit - 6 || Math.abs(b.group.position.z) > arenaLimit - 6) {
-                        b.angle = Math.atan2(b.group.position.x, b.group.position.z);
+
+                    // Botun omuz vuruşu animasyonu
+                    if (b.shoulderAnim > 0) {
+                        b.shoulderAnim--;
+                        if (b.group.children[0]) {
+                            b.group.children[0].rotation.z = Math.sin((16 - b.shoulderAnim) / 16 * Math.PI) * 0.75;
+                        }
+                    } else if (b.group.children[0]) {
+                        b.group.children[0].rotation.z = Math.sin(b.walkCycle) * (b.isAggro ? 0.22 : 0.14);
+                        b.group.children[0].position.y = 0.10 + Math.abs(Math.sin(b.walkCycle)) * 0.05;
                     }
                 }
+
+                // Botlar arası komik itiş-kakış (birbirlerine çarparlarsa da omuz atışırlar)
+                bots.forEach(otherB => {
+                    if (otherB !== b) {
+                        const distBetweenBots = b.group.position.distanceTo(otherB.group.position);
+                        if (distBetweenBots < 2.2) {
+                            const sepX = (b.group.position.x - otherB.group.position.x) * 0.12;
+                            const sepZ = (b.group.position.z - otherB.group.position.z) * 0.12;
+                            b.group.position.x += sepX;
+                            b.group.position.z += sepZ;
+                            otherB.group.position.x -= sepX;
+                            otherB.group.position.z -= sepZ;
+                            b.spinAngle = 0.25;
+                        }
+                    }
+                });
+
                 const bElev = getTerrainElevation(b.group.position.x, b.group.position.z);
                 b.group.position.y = Math.max(bElev.height, THREE.MathUtils.lerp(b.group.position.y, bElev.height, 0.45));
             });
