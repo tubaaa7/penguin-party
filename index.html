@@ -271,7 +271,7 @@
     </div>
 
     <div id="controls-hint" class="arcade-pill">
-        🥊 <b>E / Sol Tık:</b> Sağ Omuz At | <b>Shift:</b> Kay | <b>Space:</b> Balık Fırlat | <b>Dikkat:</b> Vurursan karşılık verirler!
+        🥊 <b>E / Sol Tık:</b> Sağ Omuz At | <b>Shift:</b> Kay | <b>Space:</b> Balık Fırlat | <b>Uyarı:</b> Omuz atarsan anında karşı omuz vururlar!
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -325,6 +325,7 @@
         snowFloor.receiveShadow = true;
         scene.add(snowFloor);
 
+        // Merkez Donmuş Kasaba Göleti
         const pondRadius = 42;
         const icePond = new THREE.Mesh(
             new THREE.CircleGeometry(pondRadius, 64),
@@ -685,13 +686,11 @@
             const tree = new THREE.Group();
             const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 3, 8), trunkMat);
             trunk.position.y = 1.5;
-            trunk.castShadow = true;
             tree.add(trunk);
 
             for (let lvl = 0; lvl < 3; lvl++) {
                 const pine = new THREE.Mesh(new THREE.ConeGeometry(2.4 - lvl * 0.6, 2.2, 7), pineMat);
                 pine.position.y = 2.6 + lvl * 1.3;
-                pine.castShadow = true;
                 tree.add(pine);
 
                 const cap = new THREE.Mesh(new THREE.ConeGeometry(2.1 - lvl * 0.6, 0.8, 7), snowCapMat);
@@ -905,7 +904,7 @@
                 const maxDim = Math.max(bSize.x, bSize.y, bSize.z) || 1;
                 const finalScale = 2.4 / maxDim;
 
-                // Penguenin yüzünü ileriye, sırtını kameraya döndüren yerel rotasyon
+                // Yüzü ileriye, sırtı kameraya
                 model.rotation.y = Math.PI;
 
                 const wrapper = new THREE.Group();
@@ -1135,6 +1134,7 @@
             scoreEl.innerText = score;
         }
 
+        // ================= SAĞ OMUZ ATMA VE ANINDA KARŞI ATAK =================
         function triggerShoulderBump() {
             if (!isGameStarted || isSlapping) return;
 
@@ -1168,28 +1168,45 @@
             if (!hitTarget) {
                 for (let b of bots) {
                     const dist = playerGroup.position.distanceTo(b.group.position);
-                    if (dist < 2.6) {
-                        b.knockbackX = forwardX * 1.5;
-                        b.knockbackZ = forwardZ * 1.5;
+                    if (dist < 2.8) {
+                        // 1. Bot darbeyi alır ve geriye sendeleyip döner
+                        b.knockbackX = forwardX * 1.35;
+                        b.knockbackZ = forwardZ * 1.35;
                         b.spinAngle = 0.65;
 
+                        // 2. Bot anında sinirlenir!
                         b.isAggro = true;
-                        b.aggroTimer = 240;
+                        b.aggroTimer = 260;
                         b.group.remove(b.tag);
                         b.tag = createNameTag(`😡 ${b.name}`, true);
                         b.group.add(b.tag);
 
+                        // 3. ANINDA KARŞI ATAK (COUNTER-ATTACK)
+                        // Bot saniyesinde sana doğru sağ omuz/kanat savurur ve seni de geriye savurur!
+                        const counterDirX = -forwardX;
+                        const counterDirZ = -forwardZ;
+
+                        b.shoulderAnim = 16;
+                        myKnockbackX = counterDirX * 1.6;
+                        myKnockbackZ = counterDirZ * 1.6;
+
+                        // İki penguenin omuz omuza tokuştuğu noktada büyük kar patlaması
+                        const clashX = (playerGroup.position.x + b.group.position.x) / 2;
+                        const clashZ = (playerGroup.position.z + b.group.position.z) / 2;
+                        spawnHitBurst(clashX, playerGroup.position.y + 1.2, clashZ);
+                        spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
+                        spawnDroppedCoins(playerGroup.position.x, playerGroup.position.y + 0.8, playerGroup.position.z, counterDirX, counterDirZ, 1);
+                        spawnDroppedCoins(b.group.position.x, b.group.position.y + 0.8, b.group.position.z, forwardX, forwardZ, 1);
+
+                        // Yakındaki diğer penguenler de kavgayı görüp arbedeye katılır
                         bots.forEach(otherB => {
-                            if (otherB !== b && b.group.position.distanceTo(otherB.group.position) < 14) {
+                            if (otherB !== b && b.group.position.distanceTo(otherB.group.position) < 16) {
                                 otherB.isAggro = true;
-                                otherB.aggroTimer = 180;
+                                otherB.aggroTimer = 200;
                             }
                         });
 
-                        spawnHitBurst(b.group.position.x, b.group.position.y + 1.2, b.group.position.z);
-                        spawnDroppedCoins(b.group.position.x, b.group.position.y + 0.8, b.group.position.z, forwardX, forwardZ, 1);
-
-                        addScore(60);
+                        addScore(70);
                         hitTarget = true;
                         break;
                     }
@@ -1293,378 +1310,4 @@
 
             chimneySmokes.forEach(s => {
                 s.mesh.position.y = s.baseY + Math.sin(elapsedTime * 2.2 + s.offset) * 0.35;
-                s.mesh.rotation.y += 0.015;
-            });
-
-            for (let i = sceneCoins.length - 1; i >= 0; i--) {
-                const c = sceneCoins[i];
-                c.mesh.rotation.y += 0.035;
-                c.mesh.position.y = c.baseY + Math.sin(elapsedTime * 3.5 + c.offset) * 0.18;
-
-                if (isGameStarted && playerGroup.position.distanceTo(c.mesh.position) < 2.2) {
-                    spawnHitBurst(c.mesh.position.x, c.mesh.position.y, c.mesh.position.z);
-                    scene.remove(c.mesh);
-                    sceneCoins.splice(i, 1);
-
-                    totalCoinsCollected++;
-                    if (totalCoinsCollected % 2 === 0) {
-                        fishAmmo++;
-                    }
-                    addScore(30);
-                    updateHUD();
-                }
-            }
-
-            const pos = snowGeo.attributes.position.array;
-            for (let i = 1; i < snowCount * 3; i += 3) {
-                pos[i] -= 0.16;
-                if (pos[i] < 0) pos[i] = 40;
-            }
-            snowGeo.attributes.position.needsUpdate = true;
-
-            for (let i = hitParticles.length - 1; i >= 0; i--) {
-                const hp = hitParticles[i];
-                hp.mesh.position.x += hp.vx;
-                hp.mesh.position.y += hp.vy;
-                hp.mesh.position.z += hp.vz;
-                hp.vy -= 0.012;
-                hp.life--;
-                if (hp.life <= 0) {
-                    scene.remove(hp.mesh);
-                    hitParticles.splice(i, 1);
-                }
-            }
-
-            for (let i = droppedCoins.length - 1; i >= 0; i--) {
-                const c = droppedCoins[i];
-                if (!c.isLanded) {
-                    c.mesh.position.x += c.vx;
-                    c.mesh.position.y += c.vy;
-                    c.mesh.position.z += c.vz;
-                    c.vy -= 0.018;
-                    c.mesh.rotation.y += 0.15;
-                    if (c.mesh.position.y <= c.baseY) {
-                        c.mesh.position.y = c.baseY;
-                        c.isLanded = true;
-                        c.vx = 0; c.vz = 0;
-                    }
-                } else {
-                    c.floatTime += 0.05;
-                    c.mesh.position.y = c.baseY + Math.sin(c.floatTime) * 0.12;
-                    c.mesh.rotation.y += 0.06;
-                }
-                c.life--;
-                if (isGameStarted && playerGroup.position.distanceTo(c.mesh.position) < 2.0) {
-                    scene.remove(c.mesh);
-                    droppedCoins.splice(i, 1);
-                    totalCoinsCollected++;
-                    if (totalCoinsCollected % 2 === 0) {
-                        fishAmmo++;
-                    }
-                    addScore(50);
-                    updateHUD();
-                    continue;
-                }
-                if (c.life <= 0) {
-                    scene.remove(c.mesh);
-                    droppedCoins.splice(i, 1);
-                }
-            }
-
-            if (playerMixer) playerMixer.update(delta);
-            botMixers.forEach(m => m.update(delta));
-
-            if (Math.abs(myKnockbackX) > 0.04 || Math.abs(myKnockbackZ) > 0.04) {
-                playerGroup.position.x += myKnockbackX;
-                playerGroup.position.z += myKnockbackZ;
-                myKnockbackX *= 0.88;
-                myKnockbackZ *= 0.88;
-            }
-
-            let forwardInput = 0;
-            let turnInput = 0;
-
-            if (isGameStarted) {
-                if (keys["w"] || keys["arrowup"]) forwardInput += 1;
-                if (keys["s"] || keys["arrowdown"]) forwardInput -= 0.55;
-                if (keys["a"] || keys["arrowleft"]) turnInput += 1;
-                if (keys["d"] || keys["arrowright"]) turnInput -= 1;
-            }
-
-            const isMoving = Math.abs(forwardInput) > 0.01;
-
-            if (playerDanceAction && !(keys["q"] || keys["Q"])) {
-                playerDanceAction.timeScale = isMoving ? 1.45 : 0.90;
-            }
-
-            const targetAngularSpeed = turnInput * 0.04;
-            turnAngularSpeed = THREE.MathUtils.lerp(turnAngularSpeed, targetAngularSpeed, 0.12);
-            duckAngle += turnAngularSpeed;
-
-            const targetRoll = -turnAngularSpeed * 3.5;
-            bodyRoll = THREE.MathUtils.lerp(bodyRoll, targetRoll, 0.14);
-
-            const currentElev = getTerrainElevation(playerGroup.position.x, playerGroup.position.z);
-            const moveDirX = -Math.sin(duckAngle);
-            const moveDirZ = -Math.cos(duckAngle);
-            const slopeDot = moveDirX * currentElev.slopeVector.x + moveDirZ * currentElev.slopeVector.z;
-
-            let speedMultiplier = 1.0;
-            let targetPitch = 0.0;
-
-            if (currentElev.onHill && isMoving) {
-                if (slopeDot > 0.15) {
-                    speedMultiplier = 2.0;
-                    targetPitch = 0.25; 
-                    if (Math.random() < 0.45) {
-                        spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 0.15, playerGroup.position.z);
-                    }
-                } else if (slopeDot < -0.15) {
-                    speedMultiplier = 0.72;
-                    targetPitch = 0.0; 
-                }
-            } else if (isSliding) {
-                speedMultiplier = 1.65;
-                targetPitch = 0.25;
-                if (Math.random() < 0.3) {
-                    spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 0.15, playerGroup.position.z);
-                }
-            }
-
-            const currentSpeed = baseSpeed * speedMultiplier * forwardInput;
-
-            let nextX = playerGroup.position.x - Math.sin(duckAngle) * currentSpeed;
-            let nextZ = playerGroup.position.z - Math.cos(duckAngle) * currentSpeed;
-
-            for (let obs of solidObstacles) {
-                if (Math.hypot(nextX - obs.x, nextZ - obs.z) < 1.6 + obs.radius) {
-                    nextX = playerGroup.position.x;
-                    nextZ = playerGroup.position.z;
-                    break;
-                }
-            }
-
-            if (Math.abs(nextX) < arenaLimit) playerGroup.position.x = nextX;
-            if (Math.abs(nextZ) < arenaLimit) playerGroup.position.z = nextZ;
-
-            const nextElev = getTerrainElevation(playerGroup.position.x, playerGroup.position.z);
-            const terrainHeight = nextElev.height;
-            playerGroup.position.y = Math.max(terrainHeight, THREE.MathUtils.lerp(playerGroup.position.y, terrainHeight, 0.45));
-
-            if (isGameStarted && isMoving) {
-                socket.emit("playerMovement", { 
-                    x: playerGroup.position.x, 
-                    y: playerGroup.position.y, 
-                    z: playerGroup.position.z, 
-                    rotation: duckAngle 
-                });
-            }
-
-            if (isSlapping) {
-                slapTimer--;
-                slapWingSwing = Math.sin((18 - slapTimer) / 18 * Math.PI) * 0.75;
-                if (slapTimer <= 0) {
-                    isSlapping = false;
-                    slapWingSwing = 0;
-                }
-            }
-
-            if (playerPenguinMesh) {
-                if (isMoving) {
-                    const isDownhill = slopeDot > 0.15 && currentElev.onHill;
-                    walkCycle += isDownhill ? 0.35 : 0.22;
-                    const waddle = Math.sin(walkCycle) * (isDownhill ? 0.05 : 0.14);
-
-                    playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.35, 0.2);
-                    playerPenguinMesh.position.y = 0.12 + Math.abs(Math.sin(walkCycle)) * 0.05;
-                    playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, waddle + bodyRoll + slapWingSwing * 0.85, 0.3);
-                } else {
-                    playerPenguinMesh.rotation.x = THREE.MathUtils.lerp(playerPenguinMesh.rotation.x, targetPitch + slapWingSwing * 0.35, 0.25);
-                    playerPenguinMesh.position.y = THREE.MathUtils.lerp(playerPenguinMesh.position.y, 0.12, 0.2);
-                    playerPenguinMesh.rotation.z = THREE.MathUtils.lerp(playerPenguinMesh.rotation.z, bodyRoll + slapWingSwing * 0.85, 0.3);
-                }
-            }
-
-            playerGroup.rotation.y = duckAngle;
-
-            for (let id in otherPlayers) {
-                const op = otherPlayers[id];
-                op.group.position.lerp(op.targetPos, 0.25);
-                op.group.rotation.y = THREE.MathUtils.lerp(op.group.rotation.y, op.targetRot, 0.25);
-            }
-
-            for (let i = thrownFish.length - 1; i >= 0; i--) {
-                const f = thrownFish[i];
-                f.mesh.position.x += f.dirX;
-                f.mesh.position.z += f.dirZ;
-                f.mesh.rotation.z += 0.25;
-                f.life--;
-
-                let hasHit = false;
-
-                if (f.isRemote && playerGroup.position.distanceTo(f.mesh.position) < 2.2) {
-                    myKnockbackX = f.dirX * 1.5;
-                    myKnockbackZ = f.dirZ * 1.5;
-                    spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
-                    hasHit = true;
-                }
-
-                if (!hasHit && !f.isRemote) {
-                    for (let id in otherPlayers) {
-                        const op = otherPlayers[id];
-                        if (f.mesh.position.distanceTo(op.group.position) < 2.2) {
-                            socket.emit("hitPlayer", {
-                                targetId: id,
-                                targetX: op.group.position.x,
-                                targetY: op.group.position.y,
-                                targetZ: op.group.position.z,
-                                dirX: f.dirX,
-                                dirZ: f.dirZ
-                            });
-                            addScore(150);
-                            hasHit = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!hasHit && !f.isRemote) {
-                    for (let b of bots) {
-                        if (f.mesh.position.distanceTo(b.group.position) < 2.2) {
-                            b.knockbackX = f.dirX * 1.35;
-                            b.knockbackZ = f.dirZ * 1.35;
-                            b.spinAngle = 0.45;
-                            b.isAggro = true;
-                            b.aggroTimer = 220;
-                            spawnHitBurst(b.group.position.x, b.group.position.y + 1.2, b.group.position.z);
-                            spawnDroppedCoins(b.group.position.x, b.group.position.y + 0.8, b.group.position.z, f.dirX, f.dirZ);
-                            addScore(100);
-                            hasHit = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (hasHit || f.life <= 0) {
-                    scene.remove(f.mesh);
-                    thrownFish.splice(i, 1);
-                }
-            }
-
-            // Bot Davranışları
-            bots.forEach(b => {
-                if (b.attackCooldown > 0) b.attackCooldown--;
-
-                if (Math.abs(b.knockbackX) > 0.04 || Math.abs(b.knockbackZ) > 0.04) {
-                    b.group.position.x += b.knockbackX;
-                    b.group.position.z += b.knockbackZ;
-                    b.knockbackX *= 0.88;
-                    b.knockbackZ *= 0.88;
-                    b.group.rotation.y += b.spinAngle;
-                    b.spinAngle *= 0.88;
-                } else {
-                    if (b.isAggro && isGameStarted) {
-                        b.aggroTimer--;
-                        const dx = playerGroup.position.x - b.group.position.x;
-                        const dz = playerGroup.position.z - b.group.position.z;
-                        const distToPlayer = Math.hypot(dx, dz);
-
-                        b.angle = Math.atan2(-dx, -dz);
-                        b.group.rotation.y = b.angle;
-
-                        const attackSpeed = 0.16;
-                        b.group.position.x -= Math.sin(b.angle) * attackSpeed;
-                        b.group.position.z -= Math.cos(b.angle) * attackSpeed;
-                        b.walkCycle += 0.28;
-
-                        if (distToPlayer < 2.3 && b.attackCooldown <= 0) {
-                            b.attackCooldown = 50;
-                            b.shoulderAnim = 16;
-
-                            const pushDirX = dx / distToPlayer;
-                            const pushDirZ = dz / distToPlayer;
-                            myKnockbackX = pushDirX * 1.5;
-                            myKnockbackZ = pushDirZ * 1.5;
-
-                            spawnHitBurst(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
-                            spawnDroppedCoins(playerGroup.position.x, playerGroup.position.y + 0.8, playerGroup.position.z, pushDirX, pushDirZ, 1);
-                        }
-
-                        if (b.aggroTimer <= 0) {
-                            b.isAggro = false;
-                            b.group.remove(b.tag);
-                            b.tag = createNameTag(b.name, false);
-                            b.group.add(b.tag);
-                        }
-                    } else {
-                        b.group.position.x -= Math.sin(b.angle) * b.speed;
-                        b.group.position.z -= Math.cos(b.angle) * b.speed;
-                        b.group.rotation.y = b.angle;
-                        b.walkCycle += 0.16;
-
-                        if (Math.abs(b.group.position.x) > arenaLimit - 6 || Math.abs(b.group.position.z) > arenaLimit - 6) {
-                            b.angle = Math.atan2(b.group.position.x, b.group.position.z);
-                        }
-                    }
-
-                    if (b.shoulderAnim > 0) {
-                        b.shoulderAnim--;
-                        if (b.group.children[0]) {
-                            b.group.children[0].rotation.z = Math.sin((16 - b.shoulderAnim) / 16 * Math.PI) * 0.75;
-                        }
-                    } else if (b.group.children[0]) {
-                        b.group.children[0].rotation.z = Math.sin(b.walkCycle) * (b.isAggro ? 0.22 : 0.14);
-                        b.group.children[0].position.y = 0.10 + Math.abs(Math.sin(b.walkCycle)) * 0.05;
-                    }
-                }
-
-                bots.forEach(otherB => {
-                    if (otherB !== b) {
-                        const distBetweenBots = b.group.position.distanceTo(otherB.group.position);
-                        if (distBetweenBots < 2.2) {
-                            const sepX = (b.group.position.x - otherB.group.position.x) * 0.12;
-                            const sepZ = (b.group.position.z - otherB.group.position.z) * 0.12;
-                            b.group.position.x += sepX;
-                            b.group.position.z += sepZ;
-                            otherB.group.position.x -= sepX;
-                            otherB.group.position.z -= sepZ;
-                            b.spinAngle = 0.25;
-                        }
-                    }
-                });
-
-                const bElev = getTerrainElevation(b.group.position.x, b.group.position.z);
-                b.group.position.y = Math.max(bElev.height, THREE.MathUtils.lerp(b.group.position.y, bElev.height, 0.45));
-            });
-
-            const camDist = 11.5;
-            const camHeight = 5.2;
-
-            const targetCamX = playerGroup.position.x + Math.sin(duckAngle) * camDist;
-            const targetCamZ = playerGroup.position.z + Math.cos(duckAngle) * camDist;
-            const targetCamY = playerGroup.position.y + camHeight;
-
-            camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, 0.08);
-            camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetCamY, 0.10);
-            camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetCamZ, 0.08);
-
-            camera.lookAt(
-                playerGroup.position.x - Math.sin(duckAngle) * 1.8, 
-                playerGroup.position.y + 1.2, 
-                playerGroup.position.z - Math.cos(duckAngle) * 1.8
-            );
-
-            renderer.render(scene, camera);
-        }
-
-        window.addEventListener("resize", () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        spawnFieldCoins();
-        animate();
-    </script>
-</body>
-</html>
+                s.mesh.rotation.y += 0.
