@@ -264,7 +264,7 @@
     </div>
 
     <div id="controls-hint" class="arcade-pill">
-        🥊 <b>E / Sol Tık:</b> Sağ Omuz At | <b>Shift:</b> Kay | <b>Space:</b> Balık Fırlat | <b>Uyarı:</b> Omuz atarsan karşı atak yaparlar!
+        🎥 <b>Dinamik Odak:</b> Dururken Yüze | Yürürken Ayaklara | Kayarken Göbeğe | Omuz Atarken Rakibe Odaklanır!
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -288,7 +288,7 @@
         scene.background = new THREE.Color(0xbfe3f7);
         scene.fog = new THREE.FogExp2(0xbfe3f7, 0.0024);
 
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
@@ -370,6 +370,7 @@
             const berg = new THREE.Mesh(geo, icebergMat);
             berg.scale.set(1.4, 2.2, 1.2);
             berg.position.set(x, 6 * scale, z);
+            berg.rotation.set(Math.random(), Math.random(), Math.random());
             scene.add(berg);
         }
         createIceberg(-125, -60, 1.3);
@@ -462,7 +463,6 @@
             const bodyH = 4.8 * scale;
             const bodyD = 6.2 * scale;
             const body = new THREE.Mesh(new THREE.BoxGeometry(bodyW, bodyH, bodyD), woodWallMat);
-            body.position.y = bodyH / 2;
             cabin.add(body);
 
             const roofH = 3.6 * scale;
@@ -965,13 +965,10 @@
 
         loadPenguinModel();
 
-        // Socket.io Bağlantısı
         let socket = null;
         try {
             socket = io();
-        } catch(e) {
-            console.warn("Socket.io bağlantısı sağlanamadı:", e);
-        }
+        } catch(e) {}
 
         const otherPlayers = {};
 
@@ -1080,22 +1077,15 @@
             });
         }
 
-        // KESİN VE GARANTİLİ OYUNA GİRİŞ
         function handleStartGame() {
-            // 1. Ekranı kesin olarak anında kapat
             startScreen.style.setProperty("display", "none", "important");
             isGameStarted = true;
 
             const val = nicknameInput.value.trim();
             myUsername = val !== "" ? val : "KutupPengueni_" + Math.floor(Math.random() * 1000);
             
-            try {
-                playerGroup.add(createNameTag(myUsername));
-            } catch(e) {}
-
-            try {
-                if (socket) socket.emit("joinGame", { username: myUsername });
-            } catch(e) {}
+            try { playerGroup.add(createNameTag(myUsername)); } catch(e) {}
+            try { if (socket) socket.emit("joinGame", { username: myUsername }); } catch(e) {}
         }
 
         startBtn.addEventListener("click", handleStartGame);
@@ -1125,7 +1115,6 @@
             scoreEl.innerText = score;
         }
 
-        // Sağ Omuz Atma ve Anında Karşı Atak
         function triggerShoulderBump() {
             if (!isGameStarted || isSlapping) return;
 
@@ -1173,7 +1162,7 @@
                             b.group.add(b.tag);
                         } catch(e) {}
 
-                        // Anında Karşı Atak
+                        // Karşı atak
                         const counterDirX = -forwardX;
                         const counterDirZ = -forwardZ;
                         b.shoulderAnim = 16;
@@ -1269,6 +1258,10 @@
                 triggerShoulderBump();
             }
         });
+
+        // ================= DİNAMİK KAMERA VE ODAK NOKTASI TAKİP MOTORU =================
+        let currentCamTarget = new THREE.Vector3(0, 1.0, 0);
+        let currentCamPos = new THREE.Vector3(0, 6, 12);
 
         const clock = new THREE.Clock();
 
@@ -1648,22 +1641,57 @@
                 b.group.position.y = Math.max(bElev.height, THREE.MathUtils.lerp(b.group.position.y, bElev.height, 0.45));
             });
 
-            const camDist = 11.5;
-            const camHeight = 5.2;
+            // ================= ÇOKLU / DİNAMİK HAREKET ODAK NOKTASI SİSTEMİ =================
+            let targetFocusY = 0.35; // Varsayılan: Ayaklar
+            let targetDist = 12.0;
+            let targetHeight = 6.2;
+            let targetLookAhead = 0.8;
 
-            const targetCamX = playerGroup.position.x + Math.sin(duckAngle) * camDist;
-            const targetCamZ = playerGroup.position.z + Math.cos(duckAngle) * camDist;
-            const targetCamY = playerGroup.position.y + camHeight;
+            if (isSlapping) {
+                // 1. OMUZ VURURKEN: Sağ omza ve darbe alanına odaklan
+                targetFocusY = 1.35;
+                targetDist = 10.5;
+                targetHeight = 5.2;
+                targetLookAhead = 1.5;
+            } else if (isSliding) {
+                // 2. GÖBEK ÜSTÜ KAYARKEN: Yere ve göbeğe yakınlaş, ön manzarayı genişlet
+                targetFocusY = 0.25;
+                targetDist = 11.2;
+                targetHeight = 4.2;
+                targetLookAhead = 2.4;
+            } else if (isMoving) {
+                // 3. YÜRÜRKEN / KOŞARKEN: Turuncu ayaklara ve adımlara odaklan
+                targetFocusY = 0.35;
+                targetDist = 12.2;
+                targetHeight = 6.5;
+                targetLookAhead = 1.0;
+            } else {
+                // 4. DURURKEN (IDLE): Şapkaya, yüze ve sevimli dansa odaklan
+                targetFocusY = 1.65;
+                targetDist = 9.8;
+                targetHeight = 4.6;
+                targetLookAhead = 0.2;
+            }
 
-            camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, 0.08);
-            camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetCamY, 0.10);
-            camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetCamZ, 0.08);
+            const targetCamX = playerGroup.position.x + Math.sin(duckAngle) * targetDist;
+            const targetCamZ = playerGroup.position.z + Math.cos(duckAngle) * targetDist;
+            const targetCamY = playerGroup.position.y + targetHeight;
 
-            camera.lookAt(
-                playerGroup.position.x - Math.sin(duckAngle) * 1.8, 
-                playerGroup.position.y + 1.2, 
-                playerGroup.position.z - Math.cos(duckAngle) * 1.8
-            );
+            currentCamPos.x = THREE.MathUtils.lerp(currentCamPos.x, targetCamX, 0.08);
+            currentCamPos.y = THREE.MathUtils.lerp(currentCamPos.y, targetCamY, 0.08);
+            currentCamPos.z = THREE.MathUtils.lerp(currentCamPos.z, targetCamZ, 0.08);
+            camera.position.copy(currentCamPos);
+
+            // Dinamik Bakış Noktası
+            const desiredLookX = playerGroup.position.x - Math.sin(duckAngle) * targetLookAhead;
+            const desiredLookY = playerGroup.position.y + targetFocusY;
+            const desiredLookZ = playerGroup.position.z - Math.cos(duckAngle) * targetLookAhead;
+
+            currentCamTarget.x = THREE.MathUtils.lerp(currentCamTarget.x, desiredLookX, 0.10);
+            currentCamTarget.y = THREE.MathUtils.lerp(currentCamTarget.y, desiredLookY, 0.10);
+            currentCamTarget.z = THREE.MathUtils.lerp(currentCamTarget.z, desiredLookZ, 0.10);
+
+            camera.lookAt(currentCamTarget);
 
             renderer.render(scene, camera);
         }
