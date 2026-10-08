@@ -325,7 +325,6 @@
         snowFloor.receiveShadow = true;
         scene.add(snowFloor);
 
-        // Merkez Donmuş Kasaba Göleti
         const pondRadius = 42;
         const icePond = new THREE.Mesh(
             new THREE.CircleGeometry(pondRadius, 64),
@@ -344,7 +343,7 @@
 
         let solidObstacles = [];
 
-        // ================= KUZEY IŞIKLARI =================
+        // Kuzey Işıkları
         const auroraGeo = new THREE.PlaneGeometry(280, 55, 32, 8);
         const auroraMat = new THREE.MeshBasicMaterial({
             color: 0x5eead4,
@@ -357,7 +356,7 @@
         auroraMesh.rotation.x = 0.18;
         scene.add(auroraMesh);
 
-        // ================= DEV UZAK BUZUL DAĞLARI =================
+        // Uzak Sıra Dağlar
         const distantMountainMat = new THREE.MeshStandardMaterial({ color: 0xd8ecf8, roughness: 0.6, flatShading: true });
         const mountainRadius = 185;
         const mountainCount = 28;
@@ -393,7 +392,7 @@
         createIceberg(-115, 80, 1.2);
         createIceberg(110, -90, 1.5);
 
-        // ================= KARLI DAĞ TEPECİKLERİ =================
+        // Karlı Dağ Tepecikleri
         const hillRamps = [
             { x: -55, z: 45, radiusX: 32, radiusZ: 26, height: 10.5, rot: 0.35, flagColor: 0xff0054 },
             { x: 58, z: -48, radiusX: 30, radiusZ: 34, height: 11.2, rot: -0.5, flagColor: 0x06d6a0 },
@@ -467,7 +466,7 @@
             return { height, onHill, slopeVector };
         }
 
-        // Karlı Ahşap Kasaba Evleri
+        // Evler
         let chimneySmokes = [];
         const woodWallMat = new THREE.MeshStandardMaterial({ color: 0x6f4e37, roughness: 0.85 });
         const roofWoodMat = new THREE.MeshStandardMaterial({ color: 0x4a3525, roughness: 0.8 });
@@ -546,7 +545,7 @@
         createSnowCabin(0, -42, 0, 1.2);
         createSnowCabin(0, 45, Math.PI, 1.2);
 
-        // Buz İglolar
+        // İglolar
         const iglooMat = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.45, metalness: 0.1, flatShading: true });
         function createIgloo(x, z, rotY = 0) {
             const igloo = new THREE.Group();
@@ -673,7 +672,7 @@
         }
         createTownChristmasTree(22, 0);
 
-        // Karlı Çam Ağaçları
+        // Çam Ağaçları
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.8 });
         const pineMat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.6, flatShading: true });
         const snowCapMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8, flatShading: true });
@@ -686,11 +685,13 @@
             const tree = new THREE.Group();
             const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 3, 8), trunkMat);
             trunk.position.y = 1.5;
+            trunk.castShadow = true;
             tree.add(trunk);
 
             for (let lvl = 0; lvl < 3; lvl++) {
                 const pine = new THREE.Mesh(new THREE.ConeGeometry(2.4 - lvl * 0.6, 2.2, 7), pineMat);
                 pine.position.y = 2.6 + lvl * 1.3;
+                pine.castShadow = true;
                 tree.add(pine);
 
                 const cap = new THREE.Mesh(new THREE.ConeGeometry(2.1 - lvl * 0.6, 0.8, 7), snowCapMat);
@@ -904,6 +905,9 @@
                 const maxDim = Math.max(bSize.x, bSize.y, bSize.z) || 1;
                 const finalScale = 2.4 / maxDim;
 
+                // Penguenin yüzünü ileriye, sırtını kameraya döndüren yerel rotasyon
+                model.rotation.y = Math.PI;
+
                 const wrapper = new THREE.Group();
                 model.position.set(-bCenter.x, -bBox.min.y + PENGUIN_BASE_ELEVATION, -bCenter.z);
                 wrapper.add(model);
@@ -940,6 +944,8 @@
                     bBox.getCenter(bCenter);
                     const maxDim = Math.max(bSize.x, bSize.y, bSize.z) || 1;
                     const finalScale = 2.4 / maxDim;
+
+                    bModel.rotation.y = Math.PI;
 
                     const bWrapper = new THREE.Group();
                     bModel.position.set(-bCenter.x, -bBox.min.y + PENGUIN_BASE_ELEVATION, -bCenter.z);
@@ -1008,6 +1014,8 @@
                 bBox.getCenter(bCenter);
                 const maxDim = Math.max(bSize.x, bSize.y, bSize.z) || 1;
                 const finalScale = 2.4 / maxDim;
+
+                oModel.rotation.y = Math.PI;
 
                 const oWrap = new THREE.Group();
                 oModel.position.set(-bCenter.x, -bBox.min.y + PENGUIN_BASE_ELEVATION, -bCenter.z);
@@ -1127,7 +1135,6 @@
             scoreEl.innerText = score;
         }
 
-        // ================= SAĞ OMUZ ATMA VE KOMİK KAVGA ÇAĞRISI =================
         function triggerShoulderBump() {
             if (!isGameStarted || isSlapping) return;
 
@@ -1166,14 +1173,12 @@
                         b.knockbackZ = forwardZ * 1.5;
                         b.spinAngle = 0.65;
 
-                        // Bot sinirlenir ve oyuncuya karşı saldırıya geçer!
                         b.isAggro = true;
-                        b.aggroTimer = 240; // 4 saniye boyunca oyuncuyu kovalar
+                        b.aggroTimer = 240;
                         b.group.remove(b.tag);
                         b.tag = createNameTag(`😡 ${b.name}`, true);
                         b.group.add(b.tag);
 
-                        // Yakındaki diğer bir botu da kavgaya kışkırt
                         bots.forEach(otherB => {
                             if (otherB !== b && b.group.position.distanceTo(otherB.group.position) < 14) {
                                 otherB.isAggro = true;
@@ -1369,7 +1374,6 @@
             if (playerMixer) playerMixer.update(delta);
             botMixers.forEach(m => m.update(delta));
 
-            // Oyuncunun darbe yiyip geriye savrulması
             if (Math.abs(myKnockbackX) > 0.04 || Math.abs(myKnockbackZ) > 0.04) {
                 playerGroup.position.x += myKnockbackX;
                 playerGroup.position.z += myKnockbackZ;
@@ -1547,11 +1551,10 @@
                 }
             }
 
-            // ================= BOT DAVRANIŞLARI & KARŞI SALDIRI KAVGA MOTORU =================
+            // Bot Davranışları
             bots.forEach(b => {
                 if (b.attackCooldown > 0) b.attackCooldown--;
 
-                // Geri tepme / Fırıldak dönme
                 if (Math.abs(b.knockbackX) > 0.04 || Math.abs(b.knockbackZ) > 0.04) {
                     b.group.position.x += b.knockbackX;
                     b.group.position.z += b.knockbackZ;
@@ -1560,29 +1563,24 @@
                     b.group.rotation.y += b.spinAngle;
                     b.spinAngle *= 0.88;
                 } else {
-                    // Saldırgan modda mı? Oyuncuya doğru hızlıca koşup sağ omuz vurur!
                     if (b.isAggro && isGameStarted) {
                         b.aggroTimer--;
                         const dx = playerGroup.position.x - b.group.position.x;
                         const dz = playerGroup.position.z - b.group.position.z;
                         const distToPlayer = Math.hypot(dx, dz);
 
-                        // Oyuncuya dön
                         b.angle = Math.atan2(-dx, -dz);
                         b.group.rotation.y = b.angle;
 
-                        // Kızgın penguen daha hızlı paytak koşar
                         const attackSpeed = 0.16;
                         b.group.position.x -= Math.sin(b.angle) * attackSpeed;
                         b.group.position.z -= Math.cos(b.angle) * attackSpeed;
                         b.walkCycle += 0.28;
 
-                        // Oyuncunun dibine girdiyse SAĞ OMUZ VUR!
                         if (distToPlayer < 2.3 && b.attackCooldown <= 0) {
-                            b.attackCooldown = 50; // Tekrar vurmadan önce bekleme
+                            b.attackCooldown = 50;
                             b.shoulderAnim = 16;
 
-                            // Oyuncuyu savur!
                             const pushDirX = dx / distToPlayer;
                             const pushDirZ = dz / distToPlayer;
                             myKnockbackX = pushDirX * 1.5;
@@ -1592,7 +1590,6 @@
                             spawnDroppedCoins(playerGroup.position.x, playerGroup.position.y + 0.8, playerGroup.position.z, pushDirX, pushDirZ, 1);
                         }
 
-                        // Öfkesi biterse normale dön
                         if (b.aggroTimer <= 0) {
                             b.isAggro = false;
                             b.group.remove(b.tag);
@@ -1600,7 +1597,6 @@
                             b.group.add(b.tag);
                         }
                     } else {
-                        // Normal tatlı gezinme
                         b.group.position.x -= Math.sin(b.angle) * b.speed;
                         b.group.position.z -= Math.cos(b.angle) * b.speed;
                         b.group.rotation.y = b.angle;
@@ -1611,7 +1607,6 @@
                         }
                     }
 
-                    // Botun omuz vuruşu animasyonu
                     if (b.shoulderAnim > 0) {
                         b.shoulderAnim--;
                         if (b.group.children[0]) {
@@ -1623,7 +1618,6 @@
                     }
                 }
 
-                // Botlar arası komik itiş-kakış (birbirlerine çarparlarsa da omuz atışırlar)
                 bots.forEach(otherB => {
                     if (otherB !== b) {
                         const distBetweenBots = b.group.position.distanceTo(otherB.group.position);
